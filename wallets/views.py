@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -7,7 +8,7 @@ from rest_framework.reverse import reverse
 from rest_framework import  permissions, viewsets
 
 from .models import Wallet
-from .serializers import WalletSerializer, UserSerializer
+from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer
 from .permissions import IsOwnerOrCoOwner
     
 @api_view(['GET'])
@@ -67,5 +68,10 @@ class WalletViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        wallet = serializer.save(owner=self.request.user)
+        wallet.save()
 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return WalletCreateSerializer
+        return WalletSerializer
