@@ -34,7 +34,7 @@ class Wallet(models.Model):
     
     """
     owner = models.ForeignKey('auth.User', related_name='wallets', on_delete=models.CASCADE)
-    co_owner = models.ForeignKey('auth.User', related_name='co_owned_wallets', on_delete=models.CASCADE, null=True, blank=True)
+    co_owner = models.ForeignKey('auth.User', related_name='co_owned_wallets', on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     
