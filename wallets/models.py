@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Wallet(models.Model):
@@ -34,7 +35,8 @@ class Wallet(models.Model):
     
     """
     owner = models.ForeignKey('auth.User', related_name='wallets', on_delete=models.CASCADE)
-    co_owner = models.ForeignKey('auth.User', related_name='co_owned_wallets', on_delete=models.SET_NULL, null=True, blank=True)
+    #co_owner = models.ForeignKey('auth.User', related_name='co_owned_wallets', on_delete=models.SET_NULL, null=True, blank=True)
+    co_owner = models.ManyToManyField('auth.User', related_name='co_owned_wallets', blank=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     
@@ -43,6 +45,7 @@ class Wallet(models.Model):
 
     def __str__(self):
         return self.name
+      
     
 
 class Account(models.Model):
@@ -89,9 +92,10 @@ class Account(models.Model):
         Returns the name of the account
     
     """
-    wallet = models.ForeignKey(Wallet, related_name='accounts', on_delete=models.CASCADE)
+
+    wallet = models.ManyToManyField(Wallet, related_name='accounts')
     owner = models.ForeignKey('auth.User', related_name='accounts', on_delete=models.CASCADE)
-    co_owner = models.ForeignKey('auth.User', related_name='co_owned_accounts', on_delete=models.CASCADE, null=True, blank=True)
+    co_owner = models.ManyToManyField('auth.User', related_name='co_owned_accounts', blank=True)
     type = models.CharField(max_length=100)
     institution = models.CharField(max_length=100)
     currency = models.CharField(max_length=100, default='PLN')
