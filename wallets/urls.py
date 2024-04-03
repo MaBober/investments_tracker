@@ -15,7 +15,6 @@ wallets_detail = views.WalletViewSet.as_view({
     'delete': 'destroy'
 })
 
-
 urlpatterns = [
     path('wallets/', wallets_list, name='wallets-list'),
     path('wallets/<int:pk>/', wallets_detail, name='wallets-detail'),
