@@ -2,6 +2,10 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 
+def validate_name_length(value):
+    if len(value) < 3:
+        raise ValidationError('Name must be at least 3 characters long')
+
 class Wallet(models.Model):
     """
     Wallet model
@@ -10,7 +14,7 @@ class Wallet(models.Model):
     -----
     owner: models.ForeignKey
         The user who owns the wallet
-    co_owner: models.ForeignKey
+    co_owners: models.ManyToManyField
         The user who co-owns the wallet
     name: models.CharField
         The name of the wallet
@@ -32,20 +36,35 @@ class Wallet(models.Model):
     -----
     __str__:
         Returns the name of the wallet
-    
+    clean:
+        Validates the wallet
+    save:
+        
     """
-    owner = models.ForeignKey('auth.User', related_name='wallets', on_delete=models.CASCADE)
-    #co_owner = models.ForeignKey('auth.User', related_name='co_owned_wallets', on_delete=models.SET_NULL, null=True, blank=True)
-    co_owner = models.ManyToManyField('auth.User', related_name='co_owned_wallets', blank=True)
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    owner = models.ForeignKey('auth.User', related_name='wallets', on_delete=models.CASCADE, null=False)
+    co_owners = models.ManyToManyField('auth.User', related_name='co_owned_wallets', blank=True)
+    name = models.CharField(max_length=100, validators=[validate_name_length])
+    description = models.CharField(blank=True, max_length=1000)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ['owner', 'name']
+
     def __str__(self):
         return self.name
-      
+    
+    def clean(self):
+  
+        if self.id:
+            if self.owner and self.co_owners.filter(id=self.owner.id).exists():
+                raise ValidationError('The owner and co-owner must be different users')
+        
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        super().save(*args, **kwargs)
     
 
 class Account(models.Model):

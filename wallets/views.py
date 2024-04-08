@@ -64,14 +64,15 @@ class WalletViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Wallet.objects.all()
-    serializer_class = WalletSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+
         wallet = serializer.save(owner=self.request.user)
         wallet.save()
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+
+        if self.request.method == 'POST' or self.request.method == 'PUT':
             return WalletCreateSerializer
         return WalletSerializer
