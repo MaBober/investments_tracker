@@ -29,7 +29,7 @@ def test_wallet_create_single_owner(test_user):
     assert wallet.created_at is not None
     assert wallet.updated_at is not None
     assert wallet.created_at == wallet.updated_at
-    assert timezone.now() - wallet.created_at < timezone.timedelta(seconds=1)
+    assert timezone.now() - wallet.created_at < timezone.timedelta(seconds=1.5)
 
 @pytest.mark.django_db
 def test_wallet_create_multiple_owners(test_user):

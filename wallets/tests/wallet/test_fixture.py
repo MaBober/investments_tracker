@@ -16,11 +16,16 @@ def test_user():
         {'username': 'john', 'email': 'lennon@thebeatles.com', 'password': 'johnpassword'},
         {'username': 'paul', 'email': 'mccarthney@thebeatles.com', 'password': 'paulpassword'},
         {'username': 'george', 'email': 'harrison@thebeatles.com', 'password': 'georgepassword'},
-        {'username': 'ringo', 'email': 'starr@thebeatles.com', 'password': 'ringopassword'}
+        {'username': 'ringo', 'email': 'starr@thebeatles.com', 'password': 'ringopassword'},
+        {'username': 'admin', 'email': 'admin@admin.pl', 'password': 'adminpassword', 'is_staff': True, 'is_superuser': True}
     ]   
 
     for user in users_data:
         users.append(User.objects.create_user(user['username'], user['email'], user['password']))
+        if 'is_staff' in user:
+            users[-1].is_staff = user['is_staff']
+        if 'is_superuser' in user:
+            users[-1].is_superuser = user['is_superuser']
 
     return users
 
@@ -28,6 +33,7 @@ def test_user():
 def api_client():
 
     client = APIClient()
+    client.url = '/api/v1/'
     return client
 
 @pytest.fixture
@@ -35,7 +41,14 @@ def authenticated_client(api_client, test_user):
     
     api_client.force_authenticate(user=test_user[0])
     #Set an url for the client
-    api_client.url = '/api/v1/'
+    # api_client.url = '/api/v1/'
+    return api_client
+
+@pytest.fixture
+def admin_logged_client(api_client, test_user):
+
+    api_client.force_authenticate(user=test_user[4])
+
     return api_client
 
 
@@ -53,6 +66,8 @@ def test_wallets(test_user):
 
     for wallet in wallets_data:
         wallets.append(Wallet.objects.create(owner=wallet['owner'], name=wallet['name'], description=wallet['description']))
+        if 'co_owners' in wallet:
+            wallets[-1].co_owners.set(wallet['co_owners'])
     
     return wallets
 

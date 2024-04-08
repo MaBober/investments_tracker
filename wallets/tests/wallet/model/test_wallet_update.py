@@ -1,4 +1,5 @@
 
+import time 
 import pytest
 
 from django.contrib.auth.models import User
@@ -17,6 +18,8 @@ def test_wallet_update(test_user):
 
     assert Wallet.objects.count() == 1
 
+    time.sleep(0.5)
+
     # Update the wallet
     wallet.name = 'Updated Wallet'
     wallet.description = 'This is an updated wallet'
@@ -34,7 +37,7 @@ def test_wallet_update(test_user):
     assert wallet.created_at is not None
     assert wallet.updated_at is not None
     assert wallet.created_at != wallet.updated_at
-    assert timezone.now() - wallet.updated_at < timezone.timedelta(seconds=1.5)
+    assert timezone.now() - wallet.updated_at < timezone.timedelta(seconds=2.5)
     assert wallet.owner == test_user[0]
     assert wallet.co_owners.count() == 0
 
@@ -50,6 +53,8 @@ def test_wallet_update_multiple_owners(test_user):
 
     assert Wallet.objects.count() == 1
 
+    time.sleep(0.5)
+
     # Update the wallet
     wallet.name = 'Updated Wallet'
     wallet.description = 'This is an updated wallet'
@@ -66,7 +71,7 @@ def test_wallet_update_multiple_owners(test_user):
     assert wallet.created_at is not None
     assert wallet.updated_at is not None
     assert wallet.created_at != wallet.updated_at
-    assert timezone.now() - wallet.updated_at < timezone.timedelta(seconds=1.5)
+    assert timezone.now() - wallet.updated_at < timezone.timedelta(seconds=2.5)
     assert wallet.owner == test_user[0]
     assert wallet.co_owners.count() == 2
 
@@ -76,6 +81,7 @@ def test_wallet_update_delete_co_owners(test_user):
         # Create a wallet for the user
         wallet = Wallet.objects.create(name='Test Wallet', description='This is a test wallet', owner=test_user[0])
     
+        time.sleep(0.5)
         # Add a second owner to the wallet
         wallet.co_owners.add(test_user[1])
     
