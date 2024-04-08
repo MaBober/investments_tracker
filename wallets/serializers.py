@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 
 from rest_framework import serializers
+from rest_framework.fields import CharField
 
 from .models import Wallet
 
@@ -33,30 +34,30 @@ class WalletCreateSerializer(serializers.ModelSerializer):
     This serializer is used to convert JSON data into a Wallet model instance.
 
     Attributes:
-        owner: A PrimaryKeyRelatedField that represents the owner of the wallet.
-        co_owner: A PrimaryKeyRelatedField that represents the co-owner of the wallet.
+        owner_id: A PrimaryKeyRelatedField that represents the owner of the wallet.
+        co_owners: A PrimaryKeyRelatedField that represents the co-owner of the wallet.
     
     Methods:
-        validate_co_owner: A method that validates the co_owner field.
+        validate_co_owners: A method that validates the co_owner field.
             It checks if the owner is not in the co_owner list.
         validate_name: A method that validates the name field.
             It checks if the name is at least 3 characters long and if a wallet with this name already exists.
     """
 
-    owner = serializers.PrimaryKeyRelatedField(read_only=True)
-    co_owner = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all())
+    owner_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner', 'co_owner', 'name', 'description']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'description']
 
 
-    def validate_co_owner(self, value):
+    def validate_co_owners(self, value):
 
         owner = self.context['request'].user
         
         if owner in value:
-            raise serializers.ValidationError("Owner cannot be a co-owner")
+            raise serializers.ValidationError("Owner cannot be a co-owner of the wallet.")
         return value
     
     def validate_name(self, value):
@@ -65,9 +66,9 @@ class WalletCreateSerializer(serializers.ModelSerializer):
 
         if len(value) < 3:
             raise serializers.ValidationError("Name must be at least 3 characters long")
-        
+
         if Wallet.objects.filter(owner=owner, name=value).exists():
-            raise serializers.ValidationError("Wallet with this name already exists")
+            raise serializers.ValidationError("Wallet with this Owner and Name already exists.")
         return value
 
     
@@ -81,13 +82,14 @@ class WalletSerializer(serializers.ModelSerializer):
     included in the serialized output.
 
     Attributes:
-        owner: A UserSerializer instance that represents the owner of the wallet.
-        co_owner: A UserSerializer instance that represents the co-owner of the wallet.
+        owner_id: A UserSerializer instance that represents the owner of the wallet.
+        co_owners: A UserSerializer instance that represents the co-owner of the wallet.
     """
-    owner = UserSerializer(many=False, read_only=True)
-    co_owner = UserSerializer(many=True, read_only=True)
+    owner_id = CharField(source='owner.id', read_only=True)
+    #co_owners as a list of user ids
+    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner', 'co_owner', 'name', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at']
 
