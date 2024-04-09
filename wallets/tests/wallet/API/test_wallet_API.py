@@ -387,7 +387,18 @@ def test_update_wallet_no_owner_or_co_owner(authenticated_client, test_user, tes
     assert response.data.get('detail') is not None
     assert response.data['detail'] == 'You do not have permission to perform this action.'
 
-
+@pytest.mark.django_db
+def test_update_wallet_not_found(authenticated_client, test_user, test_wallets):
+        
+        # Make a PUT request to the /wallets/100/ endpoint
+        wallet_data = {
+            'name': 'Updated Wallet',
+            'description': 'Updated Wallet description'
+        }
+    
+        response = authenticated_client.put(api_url('wallets/100/'), wallet_data, format='json')
+    
+        assert response.status_code == 404
 
 @pytest.mark.django_db
 def test_update_wallet_no_name(authenticated_client, test_user, test_wallets):
@@ -536,6 +547,14 @@ def test_delete_wallet_no_auth(api_client, test_user, test_wallets):
     
         assert response.status_code == 401
         assert Wallet.objects.count() == len(test_wallets)    
+
+@pytest.mark.django_db
+def test_delete_wallet_not_found(authenticated_client, test_user, test_wallets):
+        
+        # Make a DELETE request to the /wallets/100/ endpoint
+        response = authenticated_client.delete(api_url('wallets/100/'))
+    
+        assert response.status_code == 404
 
 def check_wallet_create_validations(authenticated_client, name, co_owners, description, error_field, error_message, other_wallets = 0):
         

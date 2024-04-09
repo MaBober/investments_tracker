@@ -6,7 +6,23 @@ def validate_name_length(value):
     if len(value) < 3:
         raise ValidationError('Name must be at least 3 characters long')
 
-class Wallet(models.Model):
+class BaseModel(models.Model):
+
+    class Meta:
+        abstract = True
+
+    def clean(self):
+        if self.id:
+            if self.owner and self.co_owners.filter(id=self.owner.id).exists():
+                raise ValidationError('The owner and co-owner must be different users')
+        
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+
+class Wallet(BaseModel):
     """
     Wallet model
 
@@ -18,7 +34,7 @@ class Wallet(models.Model):
         The user who co-owns the wallet
     name: models.CharField
         The name of the wallet
-    description: models.TextField
+    description: models.CharField
         The description of the wallet
     created_at: models.DateTimeField
         The date and time the wallet was created
@@ -54,20 +70,55 @@ class Wallet(models.Model):
 
     def __str__(self):
         return self.name
-    
-    def clean(self):
-  
-        if self.id:
-            if self.owner and self.co_owners.filter(id=self.owner.id).exists():
-                raise ValidationError('The owner and co-owner must be different users')
-        
-    def save(self, *args, **kwargs):
 
-        self.full_clean()
-        super().save(*args, **kwargs)
-    
 
-class Account(models.Model):
+class AccountType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.CharField(blank=True, max_length=1000)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+    
+class AccountInstitutionType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.CharField(blank=True, max_length=1000)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name  
+    
+class AccountInstitution(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    type = models.ForeignKey(AccountInstitutionType, on_delete=models.PROTECT)
+    country = models.CharField(max_length=100)
+    description = models.CharField(blank=True, max_length=1000)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+    
+class AccountCurrency(models.Model):
+    full_name = models.CharField(max_length=100, unique=True)
+    short_name = models.CharField(max_length=100, unique=True)
+    country = models.CharField(max_length=100)
+    description = models.CharField(blank=True, max_length=1000)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.short_name
+
+
+
+class Account(BaseModel):
     """
     Account model
 
@@ -112,22 +163,27 @@ class Account(models.Model):
     
     """
 
-    wallet = models.ManyToManyField(Wallet, related_name='accounts')
+    wallets = models.ManyToManyField(Wallet, related_name='accounts')
     owner = models.ForeignKey('auth.User', related_name='accounts', on_delete=models.CASCADE)
-    co_owner = models.ManyToManyField('auth.User', related_name='co_owned_accounts', blank=True)
-    type = models.CharField(max_length=100)
-    institution = models.CharField(max_length=100)
-    currency = models.CharField(max_length=100, default='PLN')
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    co_owners = models.ManyToManyField('auth.User', related_name='co_owned_accounts', blank=True)
+    type = models.ForeignKey(AccountType, on_delete=models.PROTECT)
+    institution = models.ForeignKey(AccountInstitution, on_delete=models.PROTECT)
+    other_institution = models.CharField(max_length=100, blank=True)
+    currency = models.ForeignKey(AccountCurrency, on_delete=models.PROTECT)
+    name = models.CharField(max_length=100, validators=[validate_name_length])
+    description = models.CharField(blank=True, max_length=1000)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    current_value = models.DecimalField(max_digits=12, decimal_places=2)
+    current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        unique_together = ['owner', 'name']
 
     def __str__(self):
         return self.name
     
+
     
 class Asset(models.Model):
     """

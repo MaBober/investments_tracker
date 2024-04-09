@@ -56,7 +56,6 @@ class WalletViewSet(viewsets.ModelViewSet):
 
     Attributes:
         queryset: A queryset that retrieves all the wallets from the database.
-        serializer_class: A WalletSerializer instance that serializes the wallets.
         permission_classes: A list of permission classes that determine who can access this view.
 
     Methods:
@@ -90,26 +89,46 @@ class WalletViewSet(viewsets.ModelViewSet):
         return WalletSerializer
     
 
-class AccountViewSet(viewsets.ViewSet):
+class AccountViewSet(viewsets.ModelViewSet):
     """
     Viewset for Account model.
     
     This viewset provides CRUD operations for the Account model.
 
     Attributes:
+        queryset: A queryset that retrieves all the accounts from the database.
         permission_classes: A list of permission classes that determine who can access this view.
+    
+    Methods:
+        perform_create: Creates a new account instance and associates it with the current user.
+        get_serializer_class: Returns the appropriate serializer class based on the request method.
     """
 
     queryset = Account.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
+    def get_permissions(self):
+        print("get_permissions")
+        if self.action == 'list':
+            self.permission_classes = [permissions.IsAdminUser]
+        elif self.action == 'create':
+            self.permission_classes = [permissions.IsAuthenticated]
+        elif self.action in ['retrieve', 'update']:
+            self.permission_classes = [IsOwnerOrCoOwner]
+        elif self.action == 'destroy':
+            self.permission_classes = [IsOwner]
+        return super(AccountViewSet, self).get_permissions()
 
+    def perform_create(self, serializer):
+        
+        print("perform_create")
         account = serializer.save(owner=self.request.user)
         account.save()
 
     def get_serializer_class(self):
-            
+        
+        print("get_serializer_class")
         if self.request.method == 'POST' or self.request.method == 'PUT':
+            print("AccountCreateSerializer")
             return AccountCreateSerializer
         return AccountSerializer

@@ -94,6 +94,12 @@ class WalletSerializer(serializers.ModelSerializer):
         fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at']
 
 
+
+
+
+
+
+
 class AccountSerializer(serializers.ModelSerializer):
     """
     Serializer for the Account model.
@@ -105,12 +111,14 @@ class AccountSerializer(serializers.ModelSerializer):
     Attributes:
         wallet_id: A PrimaryKeyRelatedField that represents the wallet associated with the account.
     """
-    wallet_id = serializers.PrimaryKeyRelatedField(queryset=Wallet.objects.all())
-    owner_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    owner_id = CharField(source='owner.id', read_only=True)
+    wallets_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all(), required=False)
+    
 
     class Meta:
-        model = Wallet
-        fields = ['id', 'name', 'wallet_id','owner_id', 'type', 'institution' 'description', 'currency', 'created_at', 'updated_at']
+        model = Account
+        fields = ['id', 'name', 'wallets_id', 'owner_id', 'type', 'institution', 'description', 'currency', 'created_at', 'updated_at']
 
 
 class AccountCreateSerializer(serializers.ModelSerializer):
@@ -123,19 +131,30 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         wallet_id: A PrimaryKeyRelatedField that represents the wallet associated with the account.
     """
 
-    wallet_id = serializers.PrimaryKeyRelatedField(queryset=Wallet.objects.all())
+    owner_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    wallets = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all(), required=False)
+    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
 
     class Meta:
-        model = Wallet
-        fields = ['id', 'name', 'wallet_id', 'type', 'institution' 'description', 'currency']
+        model = Account
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'type', 'institution', 'description', 'currency']
 
-    def validate_wallet_id(self, value):
+    def validate_wallets(self, value):
 
         owner = self.context['request'].user
-        wallet = Wallet.objects.get(id=value)
 
-        if wallet.owner != owner:
-            raise serializers.ValidationError("You do not have permission to create an account for this wallet.")
+        for wallet in value:
+            if wallet.owner != owner:
+                raise serializers.ValidationError("You do not have permission to create an account for this wallet.")
+        
+        return value
+    
+    def validate_co_owners(self, value):
+
+        owner = self.instance.owner if self.instance else self.context['request'].user
+
+        if owner in value:
+            raise serializers.ValidationError("Owner cannot be a co-owner of the wallet.")
         return value
     
     def validate_name(self, value):
@@ -164,3 +183,4 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         
         if len(value) > 1000:
             raise serializers.ValidationError("Description must be less than 1000 characters long.")
+        return value
