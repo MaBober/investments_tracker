@@ -108,7 +108,7 @@ class AccountViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        print("get_permissions")
+
         if self.action == 'list':
             self.permission_classes = [permissions.IsAdminUser]
         elif self.action == 'create':
@@ -121,14 +121,11 @@ class AccountViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         
-        print("perform_create")
         account = serializer.save(owner=self.request.user)
         account.save()
 
     def get_serializer_class(self):
         
-        print("get_serializer_class")
         if self.request.method == 'POST' or self.request.method == 'PUT':
-            print("AccountCreateSerializer")
             return AccountCreateSerializer
         return AccountSerializer

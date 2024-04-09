@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account
+from wallets.models import Wallet, Account, AccountCurrency, AccountInstitution, AccountInstitutionType, AccountType
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -40,10 +40,50 @@ class AccountCreateSerializer(serializers.ModelSerializer):
     owner_id = serializers.PrimaryKeyRelatedField(read_only=True)
     wallets = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all(), required=False)
     co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    type = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=AccountType.objects.all(),
+        error_messages={
+            'does_not_exist': '{value} is a wrong account type. Please provide a valid account type.'
+        },
+    )
+    institution = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=AccountInstitution.objects.all(),
+        error_messages={
+            'does_not_exist': '{value} is a wrong institution. Please provide a valid account institution.'
+        },
+        required=True
+    )
+    other_institution = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    currency = serializers.SlugRelatedField(
+        slug_field='short_name',
+        queryset=AccountCurrency.objects.all(),
+        error_messages={
+            'does_not_exist': 'Currency with short name {value} does not exist.'
+        },
+        required=True
+    )
+    description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
 
     class Meta:
         model = Account
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'type', 'institution', 'description', 'currency']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'other_institution', 'type', 'institution', 'description', 'currency']
+
+    def validate(self, data):
+        institution = data.get('institution')
+        other_institution = data.get('other_institution')
+
+        if institution == 'Other' and not other_institution:
+            raise serializers.ValidationError({
+                'other_institution': 'This field cannot be empty if institution is set to "Other".'
+        })
+
+        if institution != 'Other' and other_institution:
+            raise serializers.ValidationError({
+                'other_institution': "This field must be empty if institution is not set to 'Other'."
+        })
+        return data
 
     def validate_wallets(self, value):
 
@@ -75,18 +115,3 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         
         return value
     
-    #TODO: Add validation for type, institution, and currency
-    def validate_type(self, value):
-        return value
-    
-    def validate_institution(self, value):
-        return value
-    
-    def validate_currency(self, value):
-        return value
-    
-    def validate_description(self, value):
-        
-        if len(value) > 1000:
-            raise serializers.ValidationError("Description must be less than 1000 characters long.")
-        return value
