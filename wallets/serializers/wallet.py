@@ -6,6 +6,26 @@ from rest_framework.fields import CharField
 from wallets.models import Wallet, Account
 
 
+class WalletSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Wallet model.
+
+    This serializer is used to convert Wallet model instances into JSON
+    representations and vice versa. It specifies the fields that should be
+    included in the serialized output.
+
+    Attributes:
+        owner_id: A UserSerializer instance that represents the owner of the wallet.
+        co_owners: A UserSerializer instance that represents the co-owner of the wallet.
+    """
+    owner_id = CharField(source='owner.id', read_only=True)
+    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+
+    class Meta:
+        model = Wallet
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at']
+
+
 class WalletCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating a Wallet model instance.
@@ -53,21 +73,3 @@ class WalletCreateSerializer(serializers.ModelSerializer):
         return value
     
 
-class WalletSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Wallet model.
-
-    This serializer is used to convert Wallet model instances into JSON
-    representations and vice versa. It specifies the fields that should be
-    included in the serialized output.
-
-    Attributes:
-        owner_id: A UserSerializer instance that represents the owner of the wallet.
-        co_owners: A UserSerializer instance that represents the co-owner of the wallet.
-    """
-    owner_id = CharField(source='owner.id', read_only=True)
-    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
-
-    class Meta:
-        model = Wallet
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at']

@@ -8,7 +8,6 @@ from rest_framework.test import APIClient
 from wallets.tests.test_fixture import test_user, authenticated_client, api_client, admin_logged_client, api_url
 from wallets.tests.wallet.test_fixture import test_wallets
 
-#from wallets.tests.wallet.test_fixture import test_user, authenticated_client, api_client, api_url, test_wallets, admin_logged_client
 from wallets.models import Wallet
 
 
@@ -45,8 +44,7 @@ def test_get_wallets_no_admin(authenticated_client, test_user, test_wallets):
     response = authenticated_client.get(api_url('wallets/'))
 
     assert response.status_code == 403
-    assert response.data.get('detail') is not None
-    assert response.data['detail'] == 'You do not have permission to perform this action.'
+    assert response.data.get('detail') == 'You do not have permission to perform this action.'
 
 
 @pytest.mark.django_db
@@ -265,7 +263,7 @@ def test_create_wallet_owner_same_as_co_owner(authenticated_client, test_user):
 
 
 @pytest.mark.django_db
-def test_update_wallet_owner(authenticated_client, test_user, test_wallets):
+def test_update_wallet_by_owner(authenticated_client, test_user, test_wallets):
 
     # Make a PUT request to the /wallets/1/ endpoint
     wallet_to_update = test_wallets[1]
@@ -296,7 +294,7 @@ def test_update_wallet_owner(authenticated_client, test_user, test_wallets):
     assert timezone.now() - timezone.datetime.fromisoformat(response.data['updated_at']) < timezone.timedelta(seconds=1.5) 
 
 @pytest.mark.django_db
-def test_update_wallet_co_owner(authenticated_client, test_user, test_wallets):
+def test_update_wallet_by_co_owner(authenticated_client, test_user, test_wallets):
 
     # Make a PUT request to the /wallets/1/ endpoint
     wallet_to_update = test_wallets[1]
@@ -373,7 +371,7 @@ def test_update_wallet_no_auth(api_client, test_user, test_wallets):
     assert response.status_code == 401
 
 @pytest.mark.django_db
-def test_update_wallet_no_owner_or_co_owner(authenticated_client, test_user, test_wallets):
+def test_update_wallet_by_nor_owner_or_co_owner(authenticated_client, test_user, test_wallets):
         
     # Make a PUT request to the /wallets/1/ endpoint
     wallet_to_update = test_wallets[1]
@@ -403,6 +401,7 @@ def test_update_wallet_not_found(authenticated_client, test_user, test_wallets):
     
         assert response.status_code == 404
 
+
 @pytest.mark.django_db
 def test_update_wallet_no_name(authenticated_client, test_user, test_wallets):
 
@@ -415,6 +414,7 @@ def test_update_wallet_no_name(authenticated_client, test_user, test_wallets):
                                 error_message='This field may not be blank.',
                                 test_wallets=test_wallets)
     
+
 @pytest.mark.django_db
 def test_update_wallet_too_short_name(authenticated_client, test_user, test_wallets):
 
@@ -427,6 +427,7 @@ def test_update_wallet_too_short_name(authenticated_client, test_user, test_wall
                                 error_message='Name must be at least 3 characters long',
                                 test_wallets=test_wallets)
     
+
 @pytest.mark.django_db
 def test_update_wallet_too_long_name(authenticated_client, test_user, test_wallets):
 
@@ -439,6 +440,7 @@ def test_update_wallet_too_long_name(authenticated_client, test_user, test_walle
                                 error_message='Ensure this field has no more than 100 characters.',
                                 test_wallets=test_wallets)
     
+
 @pytest.mark.django_db
 def test_update_wallet_too_long_description(authenticated_client, test_user, test_wallets):
 
@@ -451,6 +453,7 @@ def test_update_wallet_too_long_description(authenticated_client, test_user, tes
                                 error_message='Ensure this field has no more than 1000 characters.',
                                 test_wallets=test_wallets)
     
+
 @pytest.mark.django_db
 def test_update_wallet_duplicated_name(authenticated_client, test_user, test_wallets):
     
@@ -470,6 +473,7 @@ def test_update_wallet_duplicated_name(authenticated_client, test_user, test_wal
                                 test_wallets=test_wallets,
                                 other_wallets=1)
         
+
 @pytest.mark.django_db
 def test_update_wallet_owner_same_as_co_owner(authenticated_client, test_user, test_wallets):
     
@@ -482,82 +486,88 @@ def test_update_wallet_owner_same_as_co_owner(authenticated_client, test_user, t
                                 error_message='Owner cannot be a co-owner of the wallet.',
                                 test_wallets=test_wallets)
     
+
 @pytest.mark.django_db
 def test_delete_wallet_owner(authenticated_client, test_user, test_wallets):
         
-        # Make a DELETE request to the /wallets/1/ endpoint
-        wallet_to_delete = test_wallets[1]
+    # Make a DELETE request to the /wallets/1/ endpoint
+    wallet_to_delete = test_wallets[1]
 
-        user_to_log = wallet_to_delete.owner
-        authenticated_client.force_authenticate(user=user_to_log)
-    
-        response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
-    
-        assert response.status_code == 204
-        assert Wallet.objects.count() == len(test_wallets) - 1
-    
-        # Make a GET request to the /wallets/1/ endpoint
-        response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
-    
-        assert response.status_code == 404
+    user_to_log = wallet_to_delete.owner
+    authenticated_client.force_authenticate(user=user_to_log)
+
+    response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 204
+    assert Wallet.objects.count() == len(test_wallets) - 1
+
+    # Make a GET request to the /wallets/1/ endpoint
+    response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 404
+
 
 @pytest.mark.django_db
 def test_delete_wallet_co_owner(authenticated_client, test_user, test_wallets):
             
-        # Make a DELETE request to the /wallets/1/ endpoint
-        wallet_to_delete = test_wallets[1]
+    # Make a DELETE request to the /wallets/1/ endpoint
+    wallet_to_delete = test_wallets[1]
 
-        user_to_log = wallet_to_delete.co_owners.first()
-        authenticated_client.force_authenticate(user=user_to_log)
-    
-        response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
+    user_to_log = wallet_to_delete.co_owners.first()
+    authenticated_client.force_authenticate(user=user_to_log)
 
-        assert response.status_code == 403
-        assert response.data.get('detail') is not None
-        assert response.data['detail'] == 'You do not have permission to perform this action.'
-    
-        # Make a GET request to the /wallets/1/ endpoint
-        response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
-    
-        assert response.status_code == 200
+    response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 403
+    assert response.data.get('detail') is not None
+    assert response.data['detail'] == 'You do not have permission to perform this action.'
+
+    # Make a GET request to the /wallets/1/ endpoint
+    response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 200
+
 
 @pytest.mark.django_db
 def test_delete_wallet_no_owner_or_co_owner(authenticated_client, test_user, test_wallets):
             
-        # Make a DELETE request to the /wallets/1/ endpoint
-        wallet_to_delete = test_wallets[1]
-        authenticated_client.force_authenticate(user=test_user[2])
+    # Make a DELETE request to the /wallets/1/ endpoint
+    wallet_to_delete = test_wallets[1]
+    authenticated_client.force_authenticate(user=test_user[2])
+
+    response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 403
+    assert response.data.get('detail') is not None
+    assert response.data['detail'] == 'You do not have permission to perform this action.'
+
+    # Make a GET request to the /wallets/1/ endpoint
+    authenticated_client.force_authenticate(user = wallet_to_delete.owner)
+    response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
     
-        response = authenticated_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
-    
-        assert response.status_code == 403
-        assert response.data.get('detail') is not None
-        assert response.data['detail'] == 'You do not have permission to perform this action.'
-    
-        # Make a GET request to the /wallets/1/ endpoint
-        authenticated_client.force_authenticate(user = wallet_to_delete.owner)
-        response = authenticated_client.get(api_url(f'wallets/{wallet_to_delete.id}/'))
-        
-        assert response.status_code == 200
+    assert response.status_code == 200
+
 
 @pytest.mark.django_db
 def test_delete_wallet_no_auth(api_client, test_user, test_wallets):
         
-        # Make a DELETE request to the /wallets/1/ endpoint
-        wallet_to_delete = test_wallets[1]
-    
-        response = api_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
-    
-        assert response.status_code == 401
-        assert Wallet.objects.count() == len(test_wallets)    
+    # Make a DELETE request to the /wallets/1/ endpoint
+    wallet_to_delete = test_wallets[1]
+
+    response = api_client.delete(api_url(f'wallets/{wallet_to_delete.id}/'))
+
+    assert response.status_code == 401
+    assert Wallet.objects.count() == len(test_wallets)    
+
 
 @pytest.mark.django_db
 def test_delete_wallet_not_found(authenticated_client, test_user, test_wallets):
         
-        # Make a DELETE request to the /wallets/100/ endpoint
-        response = authenticated_client.delete(api_url('wallets/100/'))
-    
-        assert response.status_code == 404
+    # Make a DELETE request to the /wallets/100/ endpoint
+    response = authenticated_client.delete(api_url('wallets/100/'))
+
+    assert response.status_code == 404
+
 
 def check_wallet_create_validations(authenticated_client, name, co_owners, description, error_field, error_message, other_wallets = 0):
         

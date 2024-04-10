@@ -19,12 +19,25 @@ class AccountSerializer(serializers.ModelSerializer):
     """
 
     owner_id = CharField(source='owner.id', read_only=True)
-    wallets_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all(), required=False)
+    wallets = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all())
+
+    type = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=AccountType.objects.all()
+    )
+    institution = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=AccountInstitution.objects.all()
+    )
+    currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all()
+    )
     
 
     class Meta:
         model = Account
-        fields = ['id', 'name', 'wallets_id', 'owner_id', 'type', 'institution', 'description', 'currency', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currency', 'created_at', 'updated_at']
 
 
 class AccountCreateSerializer(serializers.ModelSerializer):
@@ -109,8 +122,9 @@ class AccountCreateSerializer(serializers.ModelSerializer):
 
         if len(value) < 3:
             raise serializers.ValidationError("Name must be at least 3 characters long")
-
-        if Account.objects.filter(owner=owner, name=value).exists():
+        
+        existing_account = Account.objects.filter(owner=owner, name=value).first()
+        if existing_account and (self.instance is None or existing_account.id != self.instance.id):
             raise serializers.ValidationError("Account with this Owner and Name already exists.")
         
         return value

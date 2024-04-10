@@ -11,6 +11,9 @@ class Country(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Countries"
     
     def __str__(self):
         return self.name
@@ -30,6 +33,9 @@ class Currency(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Currencies"
 
     def __str__(self):
         return self.code

@@ -98,16 +98,18 @@ class Account(BaseModel):
     
     """
 
-    wallets = models.ManyToManyField(Wallet, related_name='accounts')
     owner = models.ForeignKey('auth.User', related_name='accounts', on_delete=models.CASCADE)
     co_owners = models.ManyToManyField('auth.User', related_name='co_owned_accounts', blank=True)
+
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT)
     institution = models.ForeignKey(AccountInstitution, on_delete=models.PROTECT)
     other_institution = models.CharField(max_length=100, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
+
     name = models.CharField(max_length=100, validators=[validate_name_length])
     description = models.CharField(blank=True, max_length=1000)
-    
+    wallets = models.ManyToManyField(Wallet, related_name='accounts', blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
