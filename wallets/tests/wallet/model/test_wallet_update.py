@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from wallets.models import Wallet
-from wallets.tests.wallet.test_fixture import test_user
+from wallets.tests.test_fixture import test_user
 
 
 @pytest.mark.django_db

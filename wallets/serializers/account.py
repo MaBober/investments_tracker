@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account, AccountCurrency, AccountInstitution, AccountInstitutionType, AccountType
+from wallets.models import Wallet, Account, AccountInstitution, AccountInstitutionType, AccountType, Currency
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -57,8 +57,8 @@ class AccountCreateSerializer(serializers.ModelSerializer):
     )
     other_institution = serializers.CharField(max_length=100, required=False, allow_blank=True)
     currency = serializers.SlugRelatedField(
-        slug_field='short_name',
-        queryset=AccountCurrency.objects.all(),
+        slug_field='code',
+        queryset=Currency.objects.all(),
         error_messages={
             'does_not_exist': 'Currency with short name {value} does not exist.'
         },
@@ -90,7 +90,7 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         owner = self.context['request'].user
 
         for wallet in value:
-            if wallet.owner != owner:
+            if wallet.owner != owner and owner not in wallet.co_owners.all():
                 raise serializers.ValidationError("You do not have permission to create an account for this wallet.")
         
         return value

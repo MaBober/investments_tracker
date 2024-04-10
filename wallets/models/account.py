@@ -1,12 +1,12 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
-from . import Wallet
+from . import Wallet, Country, Currency
 from .abstract import BaseModel, validate_name_length
 
 
 class AccountType(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True, blank=False, null=False)
     description = models.CharField(blank=True, max_length=1000)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,9 +14,14 @@ class AccountType(models.Model):
     
     def __str__(self):
         return self.name
+        
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        super().save(*args, **kwargs)
     
 class AccountInstitutionType(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True, blank=False, null=False)
     description = models.CharField(blank=True, max_length=1000)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -25,10 +30,15 @@ class AccountInstitutionType(models.Model):
     def __str__(self):
         return self.name  
     
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
 class AccountInstitution(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True, blank=False, null=False)
     type = models.ForeignKey(AccountInstitutionType, on_delete=models.PROTECT)
-    country = models.CharField(max_length=100)
+    country = models.ForeignKey(Country, on_delete=models.PROTECT)
     description = models.CharField(blank=True, max_length=1000)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -37,19 +47,11 @@ class AccountInstitution(models.Model):
     def __str__(self):
         return self.name
     
-class AccountCurrency(models.Model):
-    full_name = models.CharField(max_length=100, unique=True)
-    short_name = models.CharField(max_length=100, unique=True)
-    country = models.CharField(max_length=100)
-    description = models.CharField(blank=True, max_length=1000)
+    def save(self, *args, **kwargs):
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.short_name
-
-
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
 
 class Account(BaseModel):
     """
@@ -102,7 +104,7 @@ class Account(BaseModel):
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT)
     institution = models.ForeignKey(AccountInstitution, on_delete=models.PROTECT)
     other_institution = models.CharField(max_length=100, blank=True)
-    currency = models.ForeignKey(AccountCurrency, on_delete=models.PROTECT)
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     name = models.CharField(max_length=100, validators=[validate_name_length])
     description = models.CharField(blank=True, max_length=1000)
     

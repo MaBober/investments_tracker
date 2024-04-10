@@ -5,7 +5,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from wallets.tests.wallet.test_fixture import test_user, authenticated_client, api_client, api_url, test_wallets, admin_logged_client
+from wallets.tests.test_fixture import test_user, authenticated_client, api_client, admin_logged_client, api_url
+from wallets.tests.wallet.test_fixture import test_wallets
+
+#from wallets.tests.wallet.test_fixture import test_user, authenticated_client, api_client, api_url, test_wallets, admin_logged_client
 from wallets.models import Wallet
 
 
