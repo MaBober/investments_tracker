@@ -5,11 +5,11 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from wallets.models import Wallet
-from wallets.tests.wallet.test_fixture import test_user
+from wallets.tests.test_fixture import test_user
 
 
 @pytest.mark.django_db
-def test_wallet_delete_no_co_ownerss(test_user):
+def test_wallet_delete_no_co_owners(test_user):
     
     # Create a wallet for the user
     wallet = Wallet.objects.create(name='Test Wallet', description='This is a test wallet', owner=test_user[0])
