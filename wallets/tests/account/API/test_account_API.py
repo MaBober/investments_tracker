@@ -143,6 +143,96 @@ def test_create_account(authenticated_client, test_user, test_wallets, test_acco
     assert response.data['institution'] == test_institution[0].name
     assert response.data['currency'] == test_currencies[0].code
 
+@pytest.mark.django_db
+def test_create_account_other_institution(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+        
+    data = {
+        "name": "Checking Account",
+        "type": test_account_types[0].name,
+        "institution": "Other",
+        "other_institution": "Other Institution",
+        "currency": test_currencies[0].code,
+        "wallets": [test_wallets[0].id],
+        "description": "Checking account description",
+        "owner": test_user[0].id,
+        "co_owners": [test_user[1].id, test_user[2].id]
+    }
+
+
+    response = authenticated_client.post(api_url('accounts/'), data=data)
+
+    assert response.status_code == 201
+    assert response.data['name'] == data['name']
+    assert response.data['description'] == data['description']
+    assert response.data['owner_id'] == data['owner']
+    assert response.data['wallets'] == data['wallets']
+    assert response.data['type'] == test_account_types[0].name
+    assert response.data['institution'] == "Other"
+    assert response.data['other_institution'] == data['other_institution']
+    assert response.data['currency'] == test_currencies[0].code
+
+@pytest.mark.django_db
+def test_create_account_other_institution_no_other(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+            
+    data = {
+        "name": "Checking Account",
+        "type": test_account_types[0].name,
+        "institution": "Other",
+        "currency": test_currencies[0].code,
+        "wallets": [test_wallets[0].id],
+        "description": "Checking account description",
+        "owner": test_user[0].id,
+        "co_owners": [test_user[1].id, test_user[2].id]
+    }
+
+    check_account_create_validation(authenticated_client,
+                                    data=data,
+                                    error_field='other_institution',
+                                    error_message='This field cannot be empty if institution is set to "Other".',
+                                    other_wallets=Account.objects.count())
+    
+@pytest.mark.django_db
+def test_create_account_other_institution_other_empty_string(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+            
+    data = {
+        "name": "Checking Account",
+        "type": test_account_types[0].name,
+        "institution": "Other",
+        "other_institution": "",
+        "currency": test_currencies[0].code,
+        "wallets": [test_wallets[0].id],
+        "description": "Checking account description",
+        "owner": test_user[0].id,
+        "co_owners": [test_user[1].id, test_user[2].id]
+    }
+
+    check_account_create_validation(authenticated_client,
+                                    data=data,
+                                    error_field='other_institution',
+                                    error_message='This field cannot be empty if institution is set to "Other".',
+                                    other_wallets=Account.objects.count()
+    )
+
+@pytest.mark.django_db
+def test_create_account_institution_selected_and_other(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+            
+    data = {
+        "name": "Checking Account",
+        "type": test_account_types[0].name,
+        "institution": test_institution[0].name,
+        "other_institution": "Other Institution",
+        "currency": test_currencies[0].code,
+        "wallets": [test_wallets[0].id],
+        "description": "Checking account description",
+        "owner": test_user[0].id,
+        "co_owners": [test_user[1].id, test_user[2].id]
+    }
+
+    check_account_create_validation(authenticated_client,
+                                    data=data,
+                                    error_field='other_institution',
+                                    error_message="This field must be empty if institution is not set to 'Other'.",
+                                    other_wallets=Account.objects.count())
 
 @pytest.mark.django_db
 def test_create_account_no_auth(api_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -472,6 +562,35 @@ def test_update_account_by_owner(api_client, test_user, test_accounts, test_wall
     assert response.data['institution'] == test_institution[1].name
     assert response.data['currency'] == test_currencies[1].code
 
+@pytest.mark.django_db
+def test_update_account_to_other_institution(authenticated_client, test_user, test_accounts, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+        
+    account_to_update = test_accounts[0]
+    authenticated_client.force_authenticate(user=account_to_update.owner)
+
+    data = {
+        "name": "Updated Account",
+        "type": test_account_types[1].name,
+        "institution": "Other",
+        "other_institution": "Other Institution",
+        "currency": test_currencies[1].code,
+        "wallets": [test_wallets[1].id],
+        "description": "Updated account description",
+        "co_owners": [test_user[2].id, test_user[3].id]
+    }
+
+    response = authenticated_client.put(api_url(f'accounts/{account_to_update.id}/'), data=data)
+
+    assert response.status_code == 200
+    assert response.data['name'] == data['name']
+    assert response.data['description'] == data['description']
+    assert response.data['owner_id'] == account_to_update.owner.id
+    assert response.data['wallets'] == data['wallets']
+    assert response.data['type'] == test_account_types[1].name
+    assert response.data['institution'] == "Other"
+    assert response.data['other_institution'] == data['other_institution']
+    assert response.data['currency'] == test_currencies[1].code
+
 
 @pytest.mark.django_db
 def test_update_account_by_co_owner(api_client, test_user, test_accounts, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -576,6 +695,57 @@ def test_update_account_not_found(api_client):
 
     assert response.status_code == 404
     assert response.data.get('detail') == 'No Account matches the given query.'
+
+
+@pytest.mark.django_db
+def test_update_account_to_other_institution_no_other(authenticated_client, test_user, test_accounts, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+            
+    account_to_update = test_accounts[0]
+    authenticated_client.force_authenticate(user=account_to_update.owner)
+
+    data = {
+        "name": "Updated Account",
+        "type": test_account_types[1].name,
+        "institution": "Other",
+        "currency": test_currencies[1].code,
+        "wallets": [test_wallets[1].id],
+        "description": "Updated account description",
+        "owner": account_to_update.owner.id,
+        "co_owners": [test_user[2].id, test_user[3].id],
+        "id" : account_to_update.id
+    }
+
+    check_account_update_validation(authenticated_client,
+                                    data=data,
+                                    error_field='other_institution',
+                                    error_message='This field cannot be empty if institution is set to "Other".',
+                                    other_wallets=Account.objects.count())
+    
+
+@pytest.mark.django_db
+def test_update_account_institution_selected_and_other(authenticated_client, test_user, test_accounts, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
+
+    account_to_update = test_accounts[0]
+    authenticated_client.force_authenticate(user=account_to_update.owner)
+
+    data = {
+        "name": "Updated Account",
+        "type": test_account_types[1].name,
+        "institution": test_institution[1].name,
+        "other_institution": "Other Institution",
+        "currency": test_currencies[1].code,
+        "wallets": [test_wallets[1].id],
+        "description": "Updated account description",
+        "co_owners": [test_user[2].id, test_user[3].id],
+        "owner": account_to_update.owner.id,
+        "id" : account_to_update.id
+    }
+
+    check_account_update_validation(authenticated_client,
+                                    data=data,
+                                    error_field='other_institution',
+                                    error_message="This field must be empty if institution is not set to 'Other'.",
+                                    other_wallets=Account.objects.count())
 
 @pytest.mark.django_db
 def test_update_account_no_name(authenticated_client, test_user, test_accounts, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -990,11 +1160,13 @@ def test_delete_account_not_found(api_client):
 
 def check_account_create_validation(api_client, data, error_field, error_message, other_wallets = 0):
     
+
     user_to_log = User.objects.get(id=data['owner'])
     api_client.force_authenticate(user_to_log)
 
     data = data.copy()
     data.pop('owner')
+
 
     response = api_client.post(api_url('accounts/'), data = data, format='json')
 

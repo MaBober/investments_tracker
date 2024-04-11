@@ -119,3 +119,16 @@ class Account(BaseModel):
 
     def __str__(self):
         return self.name
+    
+    def clean(self):
+        
+        super().clean()
+
+        if hasattr(self, 'institution'):
+            if self.institution.name != 'Other' and (self.other_institution or self.other_institution != ''):
+                raise ValidationError('Other institution field must be blank if institution is selected.')
+            
+            if self.institution.name == 'Other' and (not self.other_institution or self.other_institution == ''):
+                raise ValidationError('Other institution field must not be blank if Other institution is selected.')
+            
+    

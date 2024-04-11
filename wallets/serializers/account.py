@@ -84,15 +84,15 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'other_institution', 'type', 'institution', 'description', 'currency']
 
     def validate(self, data):
-        institution = data.get('institution')
+        institution = data.get('institution').name.strip().lower()
         other_institution = data.get('other_institution')
 
-        if institution == 'Other' and not other_institution:
+        if institution == 'other' and (not other_institution or other_institution == ''):
             raise serializers.ValidationError({
                 'other_institution': 'This field cannot be empty if institution is set to "Other".'
         })
 
-        if institution != 'Other' and other_institution:
+        if institution != 'other' and other_institution and other_institution != '':
             raise serializers.ValidationError({
                 'other_institution': "This field must be empty if institution is not set to 'Other'."
         })

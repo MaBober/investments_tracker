@@ -75,6 +75,44 @@ def test_account_add_multiple_owners(test_user, test_account_types, test_institu
     assert account.created_at == account.updated_at
     assert timezone.now() - account.created_at < timezone.timedelta(seconds=1.5)
 
+
+@pytest.mark.django_db
+def test_account_create_other_instiution(test_user, test_account_types, test_account_institution_types, test_countries, test_currencies):
+    
+    other_institution = AccountInstitution.objects.create(
+        name='Other',
+        type=test_account_institution_types[4],
+        country=test_countries[0]
+    )
+    # Create an account for the user
+    account = Account.objects.create(
+        name='Test Account',
+        type=test_account_types[0],
+        institution=other_institution,
+        other_institution="Dom pana kleksa",
+        currency=test_currencies[0],
+        owner=test_user[0]
+    )
+     
+    # Check that an Account object has been added to the database
+    assert Account.objects.count() == 1
+
+    # Retrieve the account from the database
+    account = Account.objects.first()
+
+    # Check the attributes of the account
+    assert account.name == 'Test Account'
+    assert account.type == test_account_types[0]
+    assert account.institution.name == 'Other'
+    assert account.other_institution == 'Dom pana kleksa'
+    assert account.currency == test_currencies[0]
+    assert account.owner == test_user[0]
+    assert account.co_owners.count() == 0
+    assert account.created_at is not None
+    assert account.updated_at is not None
+    assert account.created_at == account.updated_at
+    assert timezone.now() - account.created_at < timezone.timedelta(seconds=1.5)
+
 @pytest.mark.django_db
 def test_account_create_no_owner(test_user, test_account_types, test_institution, test_currencies):
         
@@ -281,7 +319,46 @@ def test_account_create_with_wallet_not_owned_by_user(test_user, test_account_ty
     )       
 
 
-def check_account_validations(name, type, institution, currency, owner, description, error_field, error_message, other_wallets = 0, co_owners =[], wallets=[]):
+@pytest.mark.django_db
+def test_account_create_with_instituion_selecteded_and_other_institution(test_user, test_account_types, test_institution, test_account_institution_types, test_countries, test_currencies):
+
+    check_account_validations(
+        name='Test Account',
+        type=test_account_types[0],
+        institution=test_institution[0],
+        currency=test_currencies[0],
+        owner=test_user[0],
+        description='This is a test account',
+        error_field='__all__',
+        error_message=['Other institution field must be blank if institution is selected.'],
+        other_institution='Dom pana kleksa'
+    )
+
+
+@pytest.mark.django_db
+def test_account_create_with_other_institution_selecteded_and_no_other_institution(test_user, test_account_types, test_account_institution_types, test_countries, test_currencies):
+
+    other_institution = AccountInstitution.objects.create(
+        name='Other',
+        type=test_account_institution_types[4],
+        country=test_countries[0]
+    )
+
+    check_account_validations(
+        name='Test Account',
+        type=test_account_types[0],
+        institution=other_institution,
+        currency=test_currencies[0],
+        owner=test_user[0],
+        description='This is a test account',
+        error_field='__all__',
+        error_message=['Other institution field must not be blank if Other institution is selected.'],
+        other_institution=''
+    )
+
+
+
+def check_account_validations(name, type, institution, currency, owner, description, error_field, error_message, other_wallets = 0, co_owners =[], wallets=[], other_institution=''):
 
     with pytest.raises(ValidationError) as exception_info:
         account = Account.objects.create(
@@ -290,7 +367,8 @@ def check_account_validations(name, type, institution, currency, owner, descript
             institution=institution,
             currency=currency,
             owner=owner,
-            description=description
+            description=description,
+            other_institution=other_institution
         )
 
         if wallets:
