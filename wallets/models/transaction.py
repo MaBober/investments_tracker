@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
-from . import Asset, Account
+from . import  Account
 
 class Transaction(models.Model):
     """
@@ -47,7 +47,7 @@ class Transaction(models.Model):
         Returns the type of the bought asset
     
     """
-    asset = models.ForeignKey(Asset, related_name='transactions', on_delete=models.CASCADE)
+    # asset = models.ForeignKey(Asset, related_name='transactions', on_delete=models.CASCADE)
     account = models.ForeignKey(Account, related_name='transactions', on_delete=models.CASCADE)
     type = models.CharField(max_length=100)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
