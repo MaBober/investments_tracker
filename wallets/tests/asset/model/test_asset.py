@@ -4,9 +4,9 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from wallets.tests.test_fixture import test_countries, test_currencies
-from wallets.tests.asset.test_fixture import test_asset_types, test_exchange_marketes
+from wallets.tests.asset.test_fixture import test_asset_types, test_exchange_marketes, test_market_shares
 
-from wallets.models import AssetType, ExchangeMarket, MarketShare, AssetTypeAssociation, MarketETF
+from wallets.models import AssetType, ExchangeMarket, MarketShare, AssetTypeAssociation, MarketETF, AssetPrice
 
 
 @pytest.mark.django_db
@@ -1203,4 +1203,161 @@ def test_market_ETF_delete(test_countries, test_currencies, test_asset_types, te
 
     assert MarketETF.objects.count() == 0
     assert AssetTypeAssociation.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_asset_price_create(test_countries, test_currencies, test_asset_types, test_exchange_marketes, test_market_shares):
+
+    asset_price = AssetPrice.objects.create(
+        asset=test_market_shares[0],
+        date=timezone.now(),
+        price=100,
+        source = 'source')
+    
+    assert AssetPrice.objects.count() == 1
+
+    asset_price = AssetPrice.objects.first()
+
+    assert asset_price.asset.name == test_market_shares[0].name
+    assert asset_price.asset.code == test_market_shares[0].code
+    assert asset_price.asset.exchange_market == test_market_shares[0].exchange_market
+    assert asset_price.date is not None
+    assert asset_price.price == 100
+    assert asset_price.source == 'source'
+    assert asset_price.created_at is not None
+    assert asset_price.updated_at is not None
+    assert timezone.now() - asset_price.created_at < timezone.timedelta(seconds=1.5)
+
+@pytest.mark.django_db
+def test_asset_price_create_no_asset(test_countries, test_currencies):
+
+    with pytest.raises(ValidationError) as exception_info:
+        AssetPrice.objects.create(
+            date=timezone.now(),
+            price=100,
+            source = 'source')
+
+    assert str(exception_info.value.error_dict.get('asset')[0]) == "['This field cannot be null.']"
+    assert AssetPrice.objects.count() == 0
+
+@pytest.mark.django_db
+def test_asset_price_create_no_price(test_countries, test_currencies, test_market_shares):
+
+    with pytest.raises(ValidationError) as exception_info:
+        AssetPrice.objects.create(
+            asset=test_market_shares[0],
+            date=timezone.now(),
+            source = 'source')
+
+    assert str(exception_info.value.error_dict.get('price')[0]) == "['This field cannot be null.']"
+    assert AssetPrice.objects.count() == 0
+
+@pytest.mark.django_db
+def test_asset_price_create_no_source(test_countries, test_currencies, test_market_shares):
+
+    asset_price = AssetPrice.objects.create(
+        asset=test_market_shares[0],
+        date=timezone.now(),
+        price=100)
+
+    assert asset_price.asset.name == test_market_shares[0].name
+    assert asset_price.asset.code == test_market_shares[0].code
+    assert asset_price.asset.exchange_market == test_market_shares[0].exchange_market
+    assert asset_price.date is not None
+    assert asset_price.price == 100
+    assert asset_price.source == None
+    assert asset_price.created_at is not None
+    assert asset_price.updated_at is not None
+    assert timezone.now() - asset_price.created_at < timezone.timedelta(seconds=1.5)
+
+@pytest.mark.django_db
+def test_asset_price_create_price_negative(test_countries, test_currencies, test_market_shares):
+
+    with pytest.raises(ValidationError) as exception_info:
+        AssetPrice.objects.create(
+            asset=test_market_shares[0],
+            date=timezone.now(),
+            price=-100,
+            source = 'source')
+
+    assert str(exception_info.value.error_dict.get('price')[0]) == "['Ensure this value is greater than or equal to 0.']"
+    assert AssetPrice.objects.count() == 0
+
+@pytest.mark.django_db
+def test_asset_price_create_price_zero(test_countries, test_currencies, test_market_shares):
+
+    asset_price = AssetPrice.objects.create(
+        asset=test_market_shares[0],
+        date=timezone.now(),
+        price=0,
+        source = 'source')
+
+    assert asset_price.asset.name == test_market_shares[0].name
+    assert asset_price.asset.code == test_market_shares[0].code
+    assert asset_price.asset.exchange_market == test_market_shares[0].exchange_market
+    assert asset_price.date is not None
+    assert asset_price.price == 0
+    assert asset_price.source == 'source'
+    assert asset_price.created_at is not None
+    assert asset_price.updated_at is not None
+    assert timezone.now() - asset_price.created_at < timezone.timedelta(seconds=1.5)
+
+@pytest.mark.django_db
+def test_asset_price_create_date_future(test_countries, test_currencies, test_market_shares):
+
+    with pytest.raises(ValidationError) as exception_info:
+        AssetPrice.objects.create(
+            asset=test_market_shares[0],
+            date=timezone.now() + timezone.timedelta(days=1),
+            price=100,
+            source = 'source')
+
+    assert str(exception_info.value.error_dict.get('date')[0]) == "['Date cannot be in the future.']"
+    assert AssetPrice.objects.count() == 0
+
+@pytest.mark.django_db
+def test_asset_price_create_no_date(test_countries, test_currencies, test_market_shares):
+
+    with pytest.raises(ValidationError) as exception_info:
+        AssetPrice.objects.create(
+            asset=test_market_shares[0],
+            price=100,
+            source = 'source')
+
+    assert str(exception_info.value.error_dict.get('date')[0]) == "['This field cannot be null.']"
+    assert AssetPrice.objects.count() == 0
+
+@pytest.mark.django_db
+def test_asset_price_update(test_countries, test_currencies, test_asset_types, test_exchange_marketes, test_market_shares):
+
+    asset_price = AssetPrice.objects.create(
+        asset=test_market_shares[0],
+        date=timezone.now(),
+        price=100,
+        source = 'source')
+    
+    with pytest.raises(ValidationError) as exception_info:
+        asset_price.date = timezone.now() + timezone.timedelta(days=1)
+        asset_price.price = 200
+        asset_price.source = 'source2'
+        asset_price.save()
+
+    assert str(exception_info.value.error_list[0]) == "['Updating a asset price is not allowed.']"
+    assert AssetPrice.objects.count() == 1
+
+@pytest.mark.django_db
+def test_asset_price_delete(test_countries, test_currencies, test_asset_types, test_exchange_marketes, test_market_shares):
+
+    asset_price = AssetPrice.objects.create(
+        asset=test_market_shares[0],
+        date=timezone.now(),
+        price=100,
+        source = 'source')
+    
+    assert AssetPrice.objects.count() == 1
+
+    asset_price.delete()
+
+    assert AssetPrice.objects.count() == 0
+
 

@@ -3,9 +3,13 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 from . import Currency, Country
 
+def past_or_present_date(value):
+    if value > timezone.now().date():
+        raise ValidationError('Date cannot be in the future.')
 
 class AssetType(models.Model):
 
@@ -126,7 +130,7 @@ class MarketShare(MarketAsset):
 class MarketETF(MarketAsset):
 
     fund_country = models.ForeignKey(Country, on_delete=models.PROTECT)
-    dividend_distribution = models.BooleanField(default=False)
+    dividend_distribution = models.BooleanField(default=False, blank=False, null=False)
     replication_method = models.CharField(max_length=100, blank=False, null=False)
 
     def save(self, *args, **kwargs):
@@ -138,17 +142,28 @@ class MarketETF(MarketAsset):
 
 class AssetPrice(models.Model):
 
-    asset = models.ForeignKey(MarketAsset, related_name="prices" ,  on_delete=models.PROTECT)
-    price = models.DecimalField(max_digits=20, decimal_places=10)
-    date = models.DateField()
+    asset = models.ForeignKey(MarketAsset, related_name="prices",  on_delete=models.PROTECT)
+    price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)])
+    date = models.DateField(validators=[past_or_present_date], null=False, blank=False)
+    source = models.CharField(max_length=100, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['asset', 'date']
 
     def __str__(self):
-        return f'{self.asset.name} - {self.date}'
+        return f'{self.asset.name} - {self.date} - {self.price} {self.asset.price_currency.code}'
 
-    
+    def save(self, *args, **kwargs):
+
+        if self.id is not None:  # If the instance has already been saved to the database
+            raise ValidationError('Updating a asset price is not allowed.')
+        
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
     
 
