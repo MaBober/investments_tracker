@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
-from . import Currency, Country
+from . import Currency, Country, Account, Wallet
 
 def past_or_present_date(value):
     if value > timezone.now().date():
@@ -163,6 +163,139 @@ class AssetPrice(models.Model):
         
         self.full_clean()
         super().save(*args, **kwargs)
+
+class UserAsset(models.Model):
+
+    user = models.ForeignKey('auth.User', related_name='assets', on_delete=models.CASCADE)
+    
+    account = models.ForeignKey(Account, related_name='assets', on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet, related_name='assets', on_delete=models.CASCADE)
+
+    asset = models.ForeignKey(MarketAsset, related_name='users', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+
+    currency = models.ForeignKey(Currency, related_name='user_assets', on_delete=models.PROTECT)
+    currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
+
+    commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    commission_currency = models.ForeignKey(Currency, related_name='user_assets_commission', on_delete=models.PROTECT)    
+
+    buy_transaction = models.ForeignKey('Transaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
+    sell_transaction = models.ManyToManyField('Transaction', related_name='sell_user_assets', blank=True)
+
+    active = models.BooleanField(default=True, blank=False, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.asset.name} - {self.amount} {self.currency.code}'
+
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    
+    @staticmethod
+    def sell_asset(transaction):
+
+        print(f"Requested to sell {transaction.amount} of {transaction.asset.name}")
+
+        user_assets = UserAsset.objects.filter(user=transaction.user, asset=transaction.asset, active=True).order_by('created_at')
+
+        for user_asset in user_assets:
+            print("amount", transaction.amount)
+            if user_asset.amount > transaction.amount:
+                user_asset.amount -= transaction.amount
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+
+                break
+            
+            elif user_asset.amount == transaction.amount:
+                user_asset.active = False
+                user_asset.amount = 0
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+                break
+
+            else:
+                transaction.amount -= user_asset.amount
+                user_asset.active = False
+                user_asset.amount = 0
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+
+
+            
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('S', 'Sell'),
+        ('B', 'Buy'),
+    ]
+
+    user = models.ForeignKey('auth.User', related_name='transactions', on_delete=models.CASCADE)
+
+    transaction_type = models.CharField(max_length=1, choices=TRANSACTION_TYPES, blank=False, null=False)
+
+    account = models.ForeignKey(Account, related_name='transactions', on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet, related_name='transactions', on_delete=models.CASCADE)
+
+    asset = models.ForeignKey(MarketAsset, related_name='transactions', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+
+    currency = models.ForeignKey(Currency, related_name='transactions', on_delete=models.PROTECT)
+    currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
+
+    commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    commission_currency = models.ForeignKey(Currency, related_name='transactions_commission', on_delete=models.PROTECT)
+
+    transaction_date = models.DateTimeField(null=False, blank=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
+
+    def save(self, *args, **kwargs):
+
+        is_new = self.pk is None
+
+        if self.transaction_type == 'S':
+
+            self.full_clean()
+            super().save(*args, **kwargs)
+
+            UserAsset.sell_asset(self)
+
+
+        if self.transaction_type == 'B':
+            
+            self.full_clean()
+            super().save(*args, **kwargs)
+
+            if is_new:
+
+                user_asset = UserAsset.objects.create(
+                    user=self.user,
+                    account=self.account,
+                    wallet=self.wallet,
+                    asset=self.asset,
+                    amount=self.amount,
+                    price=self.price,
+                    currency=self.currency,
+                    currency_price=self.currency_price,
+                    commission=self.commission,
+                    commission_currency=self.commission_currency,
+                    buy_transaction=self,
+                    active=True
+                )
+                user_asset.save()
 
 
     
