@@ -59,10 +59,12 @@ class Deposit(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.amount
+        return str(self.amount) + ' ' + self.currency.code+ ' ' + self.user.username
     
     def clean(self):
-
+        
+        print(self.user)
+        print(self.wallet)
         if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
             raise ValidationError('The user must be the owner or a co-owner of the wallet to make a deposit.')
         

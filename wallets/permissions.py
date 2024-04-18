@@ -9,8 +9,10 @@ class IsOwnerOrCoOwner(permissions.BasePermission):
         """
         Return True if permission is granted to the wallet owner or is on the co-owner list.
         """
-        
-        return obj.owner == request.user or request.user in obj.co_owners.all()
+        try:
+            return obj.owner == request.user or request.user in obj.co_owners.all()
+        except AttributeError:
+            return obj.user == request.user
     
 class IsOwner(permissions.BasePermission):
     """
@@ -21,4 +23,9 @@ class IsOwner(permissions.BasePermission):
         """
         Return True if permission is granted to the wallet owner.
         """
-        return obj.owner == request.user
+        try:
+            return obj.owner == request.user
+        except AttributeError:
+            return obj.user == request.user
+    
+    
