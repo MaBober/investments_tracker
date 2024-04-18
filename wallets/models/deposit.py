@@ -63,8 +63,7 @@ class Deposit(models.Model):
     
     def clean(self):
         
-        print(self.user)
-        print(self.wallet)
+
         if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
             raise ValidationError('The user must be the owner or a co-owner of the wallet to make a deposit.')
         
