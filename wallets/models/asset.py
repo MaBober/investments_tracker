@@ -289,8 +289,13 @@ class Transaction(models.Model):
                 raise ValidationError('You do not have enough assets to sell.')
 
     def save(self, *args, **kwargs):
+        import traceback
+        print("################################")
+        print(''.join(traceback.format_stack()))
+        print("################################")
 
         is_new = self.pk is None
+        print("is_new", is_new)
 
         if self.transaction_type == 'S':
 
@@ -307,6 +312,7 @@ class Transaction(models.Model):
         if self.transaction_type == 'B':
 
             if is_new:
+                print("buy new")
                
                 self.full_clean()
                 super().save(*args, **kwargs)
@@ -314,6 +320,7 @@ class Transaction(models.Model):
                 UserAsset.buy_assets(self)
 
             else:
+                print("buy update")
                 raise ValidationError('Updating buy transaction will be added soon.')
             
     def delete(self, *args, **kwargs):
