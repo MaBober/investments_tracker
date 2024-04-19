@@ -1,6 +1,7 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
+from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
@@ -199,11 +200,9 @@ class UserAsset(models.Model):
 
     
     @staticmethod
-    def sell_asset(transaction):
+    def sell_assets(transaction):
 
-        print(f"Requested to sell {transaction.amount} of {transaction.asset.name}")
-
-        user_assets = UserAsset.objects.filter(user=transaction.user, asset=transaction.asset, active=True).order_by('created_at')
+        user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, active=True).order_by('created_at')
 
         for user_asset in user_assets:
             print("amount", transaction.amount)
@@ -228,7 +227,24 @@ class UserAsset(models.Model):
                 user_asset.sell_transaction.add(transaction)
                 user_asset.save()
 
+    @staticmethod
+    def buy_assets(transaction):
 
+        user_asset = UserAsset.objects.create(
+            user=transaction.user,
+            account=transaction.account,
+            wallet=transaction.wallet,
+            asset=transaction.asset,
+            amount=transaction.amount,
+            price=transaction.price,
+            currency=transaction.currency,
+            currency_price=transaction.currency_price,
+            commission=transaction.commission,
+            commission_currency=transaction.commission_currency,
+            buy_transaction=transaction,
+            active=True
+        )
+        user_asset.save()
             
 
 class Transaction(models.Model):
@@ -261,6 +277,16 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
+    
+    def clean(self):
+
+        if self.transaction_type == 'S':
+            
+            assets = self.user.assets.filter(asset=self.asset, active=True)
+            total_amount = assets.aggregate(Sum('amount'))['amount__sum']
+
+            if total_amount is None or total_amount < self.amount:
+                raise ValidationError('You do not have enough assets to sell.')
 
     def save(self, *args, **kwargs):
 
@@ -268,34 +294,31 @@ class Transaction(models.Model):
 
         if self.transaction_type == 'S':
 
-            self.full_clean()
-            super().save(*args, **kwargs)
-
-            UserAsset.sell_asset(self)
-
-
-        if self.transaction_type == 'B':
-            
-            self.full_clean()
-            super().save(*args, **kwargs)
-
             if is_new:
 
-                user_asset = UserAsset.objects.create(
-                    user=self.user,
-                    account=self.account,
-                    wallet=self.wallet,
-                    asset=self.asset,
-                    amount=self.amount,
-                    price=self.price,
-                    currency=self.currency,
-                    currency_price=self.currency_price,
-                    commission=self.commission,
-                    commission_currency=self.commission_currency,
-                    buy_transaction=self,
-                    active=True
-                )
-                user_asset.save()
+                self.full_clean()
+                super().save(*args, **kwargs)
+
+                UserAsset.sell_assets(self)
+
+            else:
+                raise ValidationError('Updating sell transaction will be added soon.')
+
+        if self.transaction_type == 'B':
+
+            if is_new:
+               
+                self.full_clean()
+                super().save(*args, **kwargs)
+
+                UserAsset.buy_assets(self)
+
+            else:
+                raise ValidationError('Updating buy transaction will be added soon.')
+            
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Deleting a transaction will be added soon.')
+
 
 
     
