@@ -62,7 +62,6 @@ class Deposit(models.Model):
         return str(self.amount) + ' ' + self.currency.code+ ' ' + self.user.username
     
     def clean(self):
-        
 
         if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
             raise ValidationError('The user must be the owner or a co-owner of the wallet to make a deposit.')
@@ -77,6 +76,16 @@ class Deposit(models.Model):
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+        if is_new:
+            self.account.add_deposit(self)
+
+    def delete(self, *args, **kwargs):
+
+        self.account.remove_deposit(self)
+
+        super().delete(*args, **kwargs)
