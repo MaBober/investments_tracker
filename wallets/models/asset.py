@@ -199,52 +199,52 @@ class UserAsset(models.Model):
         super().save(*args, **kwargs)
 
     
-    @staticmethod
-    def sell_assets(transaction):
+    # @staticmethod
+    # def sell_assets(transaction):
 
-        user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, active=True).order_by('created_at')
+    #     user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, active=True).order_by('created_at')
 
-        for user_asset in user_assets:
-            print("amount", transaction.amount)
-            if user_asset.amount > transaction.amount:
-                user_asset.amount -= transaction.amount
-                user_asset.sell_transaction.add(transaction)
-                user_asset.save()
+    #     for user_asset in user_assets:
+    #         print("amount", transaction.amount)
+    #         if user_asset.amount > transaction.amount:
+    #             user_asset.amount -= transaction.amount
+    #             user_asset.sell_transaction.add(transaction)
+    #             user_asset.save()
 
-                break
+    #             break
             
-            elif user_asset.amount == transaction.amount:
-                user_asset.active = False
-                user_asset.amount = 0
-                user_asset.sell_transaction.add(transaction)
-                user_asset.save()
-                break
+    #         elif user_asset.amount == transaction.amount:
+    #             user_asset.active = False
+    #             user_asset.amount = 0
+    #             user_asset.sell_transaction.add(transaction)
+    #             user_asset.save()
+    #             break
 
-            else:
-                transaction.amount -= user_asset.amount
-                user_asset.active = False
-                user_asset.amount = 0
-                user_asset.sell_transaction.add(transaction)
-                user_asset.save()
+    #         else:
+    #             transaction.amount -= user_asset.amount
+    #             user_asset.active = False
+    #             user_asset.amount = 0
+    #             user_asset.sell_transaction.add(transaction)
+    #             user_asset.save()
 
-    @staticmethod
-    def buy_assets(transaction):
+    # @staticmethod
+    # def buy_assets(transaction):
 
-        user_asset = UserAsset.objects.create(
-            user=transaction.user,
-            account=transaction.account,
-            wallet=transaction.wallet,
-            asset=transaction.asset,
-            amount=transaction.amount,
-            price=transaction.price,
-            currency=transaction.currency,
-            currency_price=transaction.currency_price,
-            commission=transaction.commission,
-            commission_currency=transaction.commission_currency,
-            buy_transaction=transaction,
-            active=True
-        )
-        user_asset.save()
+    #     user_asset = UserAsset.objects.create(
+    #         user=transaction.user,
+    #         account=transaction.account,
+    #         wallet=transaction.wallet,
+    #         asset=transaction.asset,
+    #         amount=transaction.amount,
+    #         price=transaction.price,
+    #         currency=transaction.currency,
+    #         currency_price=transaction.currency_price,
+    #         commission=transaction.commission,
+    #         commission_currency=transaction.commission_currency,
+    #         buy_transaction=transaction,
+    #         active=True
+    #     )
+    #     user_asset.save()
             
 
 class Transaction(models.Model):
@@ -275,6 +275,19 @@ class Transaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def total_price(self):
+
+        price_in_asset_currency = self.amount * self.price
+        price_in_account_currency = price_in_asset_currency * self.currency_price
+
+        if self.commission_currency == self.currency:
+            commission = self.commission
+        else:
+            commission = self.commission * self.commission_currency.price
+        
+        return price_in_account_currency + commission
+
     def __str__(self):
         return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
     
@@ -289,13 +302,8 @@ class Transaction(models.Model):
                 raise ValidationError('You do not have enough assets to sell.')
 
     def save(self, *args, **kwargs):
-        import traceback
-        print("################################")
-        print(''.join(traceback.format_stack()))
-        print("################################")
 
         is_new = self.pk is None
-        print("is_new", is_new)
 
         if self.transaction_type == 'S':
 
@@ -303,8 +311,8 @@ class Transaction(models.Model):
 
                 self.full_clean()
                 super().save(*args, **kwargs)
+                self.account.sell_assets(self)
 
-                UserAsset.sell_assets(self)
 
             else:
                 raise ValidationError('Updating sell transaction will be added soon.')
@@ -312,19 +320,21 @@ class Transaction(models.Model):
         if self.transaction_type == 'B':
 
             if is_new:
-                print("buy new")
                
                 self.full_clean()
                 super().save(*args, **kwargs)
 
-                UserAsset.buy_assets(self)
+                self.account.buy_assets(self)
+
+                #UserAsset.buy_assets(self)
 
             else:
-                print("buy update")
                 raise ValidationError('Updating buy transaction will be added soon.')
             
     def delete(self, *args, **kwargs):
         raise ValidationError('Deleting a transaction will be added soon.')
+    
+    
 
 
 
