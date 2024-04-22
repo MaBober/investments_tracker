@@ -49,11 +49,11 @@ class Withdrawal(models.Model):
         Returns the amount of the withdrawal
     
     """
-    wallet = models.ForeignKey(Wallet, related_name='deposits', on_delete=models.CASCADE)
-    account = models.ForeignKey(Account, related_name='deposits', on_delete=models.CASCADE)
-    user = models.ForeignKey('auth.User', related_name='deposits', on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet, related_name='withdrawals', on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, related_name='withdrawals', on_delete=models.CASCADE)
+    user = models.ForeignKey('auth.User', related_name='withdrawals', on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0.01)])
-    currency = models.ForeignKey(Currency, related_name='deposits', on_delete=models.PROTECT)
+    currency = models.ForeignKey(Currency, related_name='withdrawals', on_delete=models.PROTECT)
     description = models.CharField(blank=True, max_length=1000)
     withdrawn_at = models.DateTimeField(validators=[past_or_present_time], null=False, blank=False)
     
@@ -61,7 +61,7 @@ class Withdrawal(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.amount
+        return str(self.amount) + ' ' + self.currency.code+ ' ' + self.user.username
     
     def clean(self):
 
