@@ -160,6 +160,29 @@ class Account(BaseModel):
         self.current_balance -= deposit.amount
         self.save()
 
+    def add_withdrawal(self, withdrawal):
+        """
+        Make a withdrawal from the account
+        """
+
+        if withdrawal.account != self:
+            raise ValidationError('The withdrawal must be made from this account.')
+    
+
+        self.current_balance -= withdrawal.amount
+        self.save()
+
+    def remove_withdrawal(self, withdrawal):
+        """
+        Remove a withdrawal from the account
+        """
+
+        if withdrawal.account != self:
+            raise ValidationError('The withdrawal must be made from this account.')
+        
+        self.current_balance += withdrawal.amount
+        self.save()
+
     
     def verify_balance(self):
         """
@@ -222,7 +245,7 @@ class Account(BaseModel):
         user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
 
         for user_asset in user_assets:
-            print("amount", transaction.amount)
+
             if user_asset.amount > transaction.amount:
                 user_asset.amount -= transaction.amount
                 user_asset.sell_transaction.add(transaction)

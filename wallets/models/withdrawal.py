@@ -1,7 +1,14 @@
+
+from django.utils import timezone
 from django.db import models
+from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 
-from . import Account
+from . import Account, Wallet, Currency
+
+def past_or_present_time(value):
+    if value > timezone.now():
+        raise ValidationError('Date cannot be in the future.')
 
 class Withdrawal(models.Model):
     """
@@ -9,6 +16,9 @@ class Withdrawal(models.Model):
 
     Attributes:
     -----
+
+    wallet: models.ForeignKey
+        The wallet the withdrawal belongs to
     account: models.ForeignKey
         The account the withdrawal belongs to
     user: models.ForeignKey
@@ -39,16 +49,49 @@ class Withdrawal(models.Model):
         Returns the amount of the withdrawal
     
     """
-    account = models.ForeignKey(Account, related_name='withdrawals', on_delete=models.CASCADE)
-    user = models.ForeignKey('auth.User', related_name='withdrawals', on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    withdrawn_at = models.DateTimeField()
+    wallet = models.ForeignKey(Wallet, related_name='deposits', on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, related_name='deposits', on_delete=models.CASCADE)
+    user = models.ForeignKey('auth.User', related_name='deposits', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0.01)])
+    currency = models.ForeignKey(Currency, related_name='deposits', on_delete=models.PROTECT)
+    description = models.CharField(blank=True, max_length=1000)
+    withdrawn_at = models.DateTimeField(validators=[past_or_present_time], null=False, blank=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.amount
+    
+    def clean(self):
+
+        if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
+            raise ValidationError('You are not authorized to make this withdrawal.')
+        
+        if self.account not in self.wallet.accounts.all():
+            raise ValidationError('The account must belong to the wallet to make a withdrawal.')
+        
+        if self.user != self.account.owner and self.user not in self.account.co_owners.all():
+            raise ValidationError('You are not authorized to make this withdrawal.')
+        
+        if self.currency != self.account.currency:
+            raise ValidationError('The currency of the withdrawal must be the same as the currency of the account.')
+        
+        if self.amount > self.account.current_balance:
+            raise ValidationError('Insufficient funds to make this withdrawal.')
+        
+    def save(self, *args, **kwargs):
+
+        is_new = self.pk is None
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+        if is_new:
+            self.account.add_withdrawal(self)
+
+    def delete(self, *args, **kwargs):
+
+        self.account.remove_withdrawal(self)
+        super().delete(*args, **kwargs)
 
