@@ -181,6 +181,70 @@ class Account(BaseModel):
             return True
         
 
+    def buy_asset(self, transaction):
+        """
+        Buy an asset with the account
+        """
+
+        from . import UserAsset
+
+        if transaction.account != self:
+            raise ValidationError('The transaction must be made with this account.')
+        
+        if transaction.currency != self.currency:
+            raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
+        
+        if transaction.transaction_type != 'B':
+            raise ValidationError('The type of the transaction must be BUY.')
+    
+        if transaction.total_price > self.current_balance:
+            raise ValidationError('The account does not have enough balance to make the transaction.')
+
+        user_asset = UserAsset.objects.create(
+            user=transaction.user,
+            account=transaction.account,
+            wallet=transaction.wallet,
+            asset=transaction.asset,
+            amount=transaction.amount,
+            price=transaction.price,
+            currency=transaction.currency,
+            currency_price=transaction.currency_price,
+            commission=transaction.commission,
+            commission_currency=transaction.commission_currency,
+            buy_transaction=transaction,
+            active=True
+        )
+        user_asset.save()
+
+
+    def sell_asset(self, transaction):
+
+        user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
+
+        for user_asset in user_assets:
+            print("amount", transaction.amount)
+            if user_asset.amount > transaction.amount:
+                user_asset.amount -= transaction.amount
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+
+                break
+            
+            elif user_asset.amount == transaction.amount:
+                user_asset.active = False
+                user_asset.amount = 0
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+                break
+
+            else:
+                transaction.amount -= user_asset.amount
+                user_asset.active = False
+                user_asset.amount = 0
+                user_asset.sell_transaction.add(transaction)
+                user_asset.save()
+        
+
 
 
             
