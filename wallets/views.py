@@ -160,7 +160,6 @@ class DepositViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         
         deposit = serializer.save(user=self.request.user)
-        deposit.save()
     
     def get_serializer_class(self):
         
@@ -198,7 +197,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         
         transaction = serializer.save(user=self.request.user)
-        transaction.save()
     
     def get_serializer_class(self):
         

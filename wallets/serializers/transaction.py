@@ -37,6 +37,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'commission',
             'commission_currency',
             'transaction_date',
+            'total_price'
         ]
 
 class TransactionCreateSerializer(serializers.ModelSerializer):

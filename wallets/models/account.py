@@ -194,7 +194,7 @@ class Account(BaseModel):
         if transaction.currency != self.currency:
             raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
         
-        if transaction.type != 'BUY':
+        if transaction.transaction_type != 'B':
             raise ValidationError('The type of the transaction must be BUY.')
     
         if transaction.total_price > self.current_balance:
