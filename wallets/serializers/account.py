@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 
 from rest_framework import serializers
 from rest_framework.fields import CharField
+from django.core.exceptions import ValidationError
+
 
 from wallets.models import Wallet, Account, AccountInstitution, AccountInstitutionType, AccountType, Currency
 
@@ -37,8 +39,18 @@ class AccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currency', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currency', 'current_balance', 'created_at', 'updated_at']
 
+    def to_representation(self, instance):
+
+        representation = super().to_representation(instance)
+        
+        try:
+            instance.verify_balance()
+        except ValidationError as e:
+            representation['balance_error'] = str(e)
+
+        return representation
 
 class AccountCreateSerializer(serializers.ModelSerializer):
     """
