@@ -239,6 +239,9 @@ class Account(BaseModel):
         )
         user_asset.save()
 
+        self.current_balance -= transaction.total_price
+        self.save()
+
 
     def sell_asset(self, transaction):
 
@@ -266,6 +269,8 @@ class Account(BaseModel):
                 user_asset.amount = 0
                 user_asset.sell_transaction.add(transaction)
                 user_asset.save()
+
+        self.current_balance += transaction.total_price
         
 
 
