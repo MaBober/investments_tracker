@@ -113,6 +113,7 @@ class Account(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    current_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=False, null=False, default=0)
 
     class Meta:
         unique_together = ['owner', 'name']
@@ -130,5 +131,57 @@ class Account(BaseModel):
             
             if self.institution.name == 'Other' and (not self.other_institution or self.other_institution == ''):
                 raise ValidationError('Other institution field must not be blank if Other institution is selected.')
+            
+    def add_deposit(self, deposit):
+        """
+        Make a deposit to the account
+        """
+
+        if deposit.account != self:
+            raise ValidationError('The deposit must be made to this account.')
+        
+        if deposit.currency != self.currency:
+            raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
+
+        self.current_balance += deposit.amount
+        self.save()
+
+    def remove_deposit(self, deposit):
+        """
+        Remove a deposit from the account
+        """
+
+        if deposit.account != self:
+            raise ValidationError('The deposit must be made to this account.')
+        
+        if deposit.currency != self.currency:
+            raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
+
+        self.current_balance -= deposit.amount
+        self.save()
+
+    
+    def verify_balance(self):
+        """
+        Verify the balance of the account
+        """
+
+        deposits = self.deposits.all()
+        withdrawals = self.withdrawals.all()
+
+        total_deposits = sum([deposit.amount for deposit in deposits])
+        total_withdrawals = sum([withdrawal.amount for withdrawal in withdrawals])
+
+        current_balance = total_deposits - total_withdrawals
+
+        if current_balance != self.current_balance:
+            raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.current_balance} but should be {current_balance}.')
+        
+        else:
+            return True
+        
+
+
+
             
     
