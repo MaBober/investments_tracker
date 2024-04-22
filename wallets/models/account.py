@@ -195,7 +195,10 @@ class Account(BaseModel):
         total_deposits = sum([deposit.amount for deposit in deposits])
         total_withdrawals = sum([withdrawal.amount for withdrawal in withdrawals])
 
-        current_balance = total_deposits - total_withdrawals
+        total_buys = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='B')])
+        total_sells = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='S')])
+
+        current_balance = total_deposits - total_withdrawals - total_buys + total_sells
 
         if current_balance != self.current_balance:
             raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.current_balance} but should be {current_balance}.')
@@ -243,9 +246,10 @@ class Account(BaseModel):
         self.save()
 
 
-    def sell_asset(self, transaction):
+    def sell_assets(self, transaction):
 
-        user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
+
+        user_assets = transaction.user.assets.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
 
         for user_asset in user_assets:
 
@@ -271,6 +275,7 @@ class Account(BaseModel):
                 user_asset.save()
 
         self.current_balance += transaction.total_price
+        self.save()
         
 
 

@@ -51,6 +51,22 @@ class Transaction(models.Model):
                 commission = self.commission * self.currency_price
 
             return price_in_account_currency + commission
+        
+        if self.transaction_type == 'S':
+
+            price_in_asset_currency = self.amount * self.price
+
+            if self.currency != self.account.currency:
+                price_in_account_currency = price_in_asset_currency * self.currency_price
+            else:
+                price_in_account_currency = price_in_asset_currency
+
+            if self.commission_currency == self.currency:
+                commission = self.commission
+            else:
+                commission = self.commission * self.currency_price
+
+            return price_in_account_currency - commission
 
     def __str__(self):
         return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
