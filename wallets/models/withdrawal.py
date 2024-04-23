@@ -75,20 +75,27 @@ class Withdrawal(models.Model):
             raise ValidationError('You are not authorized to make this withdrawal.')
         
         if self.currency != self.account.currency:
-            raise ValidationError('The currency of the withdrawal must be the same as the currency of the account.')
+            raise ValidationError({'currency':'The currency of the withdrawal must be the same as the currency of the account.'})
         
+        if self.amount is None:
+            raise ValidationError({'amount':'The amount of the withdrawal cannot be empty.'})
+
         if self.amount > self.account.current_balance:
-            raise ValidationError('Insufficient funds to make this withdrawal.')
+            raise ValidationError({'amount':'Insufficient funds to make this withdrawal.'})
         
     def save(self, *args, **kwargs):
 
         is_new = self.pk is None
 
-        self.full_clean()
-        super().save(*args, **kwargs)
-
         if is_new:
+
+            self.full_clean()
+            super().save(*args, **kwargs)
+
             self.account.add_withdrawal(self)
+
+        else:
+            raise ValidationError({'update_sell_transaction': 'Updating sell transaction will be added soon.'})
 
     def delete(self, *args, **kwargs):
 
