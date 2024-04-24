@@ -7,8 +7,8 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
-from .models import Wallet, Account, Deposit, Transaction
-from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, TransactionCreateSerializer, TransactionSerializer
+from .models import Wallet, Account, Deposit, Transaction, Withdrawal
+from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, TransactionCreateSerializer, TransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
 @api_view(['GET'])
@@ -167,6 +167,41 @@ class DepositViewSet(viewsets.ModelViewSet):
             return DepositCreateSerializer
         return DepositSerializer
     
+class WithdrawalViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for Withdrawal model.
+    
+    This viewset provides CRUD operations for the Withdrawal model.
+
+    Attributes:
+        queryset: A queryset that retrieves all the withdrawals from the database.
+        permission_classes: A list of permission classes that determine who can access this view.
+    """
+
+    queryset = Withdrawal.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        
+        if self.action == 'list':
+            self.permission_classes = [permissions.IsAdminUser]
+        elif self.action == 'create':
+            self.permission_classes = [permissions.IsAuthenticated]
+        elif self.action in ['retrieve', 'update']:
+            self.permission_classes = [IsOwnerOrCoOwner]
+        elif self.action == 'destroy':
+            self.permission_classes = [IsOwner]
+        return super(WithdrawalViewSet, self).get_permissions()
+
+    def perform_create(self, serializer):
+        
+        withdrawal = serializer.save(user=self.request.user)
+    
+    def get_serializer_class(self):
+        
+        if self.request.method == 'POST' or self.request.method == 'PUT':
+            return WithdrawalCreateSerializer
+        return WithdrawalSerializer
 
 class TransactionViewSet(viewsets.ModelViewSet):
     """

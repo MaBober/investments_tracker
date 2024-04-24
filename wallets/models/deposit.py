@@ -87,5 +87,4 @@ class Deposit(models.Model):
     def delete(self, *args, **kwargs):
 
         self.account.remove_deposit(self)
-
         super().delete(*args, **kwargs)

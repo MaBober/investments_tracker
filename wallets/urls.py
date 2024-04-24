@@ -48,6 +48,17 @@ transaction_detail = views.TransactionViewSet.as_view({
     'delete': 'destroy'
 })
 
+withdrawal_list = views.WithdrawalViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+
+withdrawal_detail = views.WithdrawalViewSet.as_view({
+    'get': 'retrieve',
+    #'put': 'update',
+    'delete': 'destroy'
+})
+
 
 urlpatterns = [
     path('wallets/', wallets_list, name='wallets-list'),
@@ -58,6 +69,8 @@ urlpatterns = [
     path('deposits/<int:pk>/', deposit_detail, name='deposit-detail'),
     path('transactions/', transaction_list, name='transaction-list'),
     path('transactions/<int:pk>/', transaction_detail, name='transaction-detail'),
+    path('withdrawals/', withdrawal_list, name='withdrawal-list'),
+    path('withdrawals/<int:pk>/', withdrawal_detail, name='withdrawal-detail'),
     path('users/', views.UserList.as_view(), name='user-list'),
     path('users/<int:pk>/', views.UserDetail.as_view())
 ]
