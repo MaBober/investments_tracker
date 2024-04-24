@@ -55,7 +55,7 @@ withdrawal_list = views.WithdrawalViewSet.as_view({
 
 withdrawal_detail = views.WithdrawalViewSet.as_view({
     'get': 'retrieve',
-    'put': 'update',
+    #'put': 'update',
     'delete': 'destroy'
 })
 

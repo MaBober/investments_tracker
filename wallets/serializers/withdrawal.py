@@ -63,14 +63,14 @@ class WithdrawalCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'wallet', 'account', 'user_id', 'amount', 'currency', 'description', 'withdrawn_at', 'created_at', 'updated_at']
 
 
-    def validate_wallet_id(self, value):
+    def validate_wallet(self, value):
 
         if value.owner != self.context['request'].user and self.context['request'].user not in value.co_owners.all():
             raise serializers.ValidationError('You do not own this wallet.')
 
         return value
     
-    def validate_account_id(self, value):
+    def validate_account(self, value):
 
         if value.owner != self.context['request'].user and self.context['request'].user not in value.co_owners.all():
             raise serializers.ValidationError('You do not own this account.')
@@ -89,3 +89,29 @@ class WithdrawalCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This currency is not supported by this account.')
         
         return value
+    
+    def validate_amount(self, value):
+
+        account_id = self.initial_data.get('account')
+        try:
+            account = Account.objects.get(pk=account_id)
+        except ObjectDoesNotExist:
+            return value
+
+        if value > account.current_balance:
+            raise serializers.ValidationError('Insufficient funds in the account.')
+
+        return value
+    
+
+    def validate(self, data):
+
+        wallet = data.get('wallet')
+        account = data.get('account')
+
+        if wallet and account:
+            if not wallet.accounts.filter(pk=account.pk).exists():
+                raise serializers.ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a withdrawal.'})
+
+        return data
+    

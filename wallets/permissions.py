@@ -12,7 +12,8 @@ class IsOwnerOrCoOwner(permissions.BasePermission):
         try:
             return obj.owner == request.user or request.user in obj.co_owners.all()
         except AttributeError:
-            return obj.user == request.user
+            return obj.wallet.owner == request.user or request.user in obj.wallet.co_owners.all()
+           
     
 class IsOwner(permissions.BasePermission):
     """

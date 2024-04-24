@@ -66,13 +66,13 @@ class Withdrawal(models.Model):
     def clean(self):
 
         if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
-            raise ValidationError('You are not authorized to make this withdrawal.')
+            raise ValidationError({'unauthorized_withdrawal': 'You are not authorized to make this withdrawal.'})
         
         if self.account not in self.wallet.accounts.all():
-            raise ValidationError('The account must belong to the wallet to make a withdrawal.')
+            raise ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a withdrawal.'})
         
         if self.user != self.account.owner and self.user not in self.account.co_owners.all():
-            raise ValidationError('You are not authorized to make this withdrawal.')
+            raise ValidationError({'unauthorized_withdrawal': 'You are not authorized to make this withdrawal.'})
         
         if self.currency != self.account.currency:
             raise ValidationError({'currency':'The currency of the withdrawal must be the same as the currency of the account.'})
