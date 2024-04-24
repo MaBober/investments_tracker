@@ -1,6 +1,6 @@
 import pytest
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils import timezone
 from django.db.models import Count
 
@@ -313,8 +313,7 @@ def test_deposit_with_currency_not_in_account(test_user, test_wallets, test_acco
 
 def check_deposit_validations(wallet, account, user, amount, currency, description, deposited_at, error_field, error_message):
 
-
-    with pytest.raises((ValidationError, Deposit.account.RelatedObjectDoesNotExist, Deposit.wallet.RelatedObjectDoesNotExist)) as exception_info:
+    with pytest.raises((ValidationError, ObjectDoesNotExist)) as exception_info:
         Deposit.objects.create(
             wallet=wallet,
             account=account,
@@ -326,7 +325,6 @@ def check_deposit_validations(wallet, account, user, amount, currency, descripti
         )
 
     try:
-        print(exception_info.value.message_dict)
         assert exception_info.value.message_dict[error_field][0] == error_message
         assert Deposit.objects.count() == 0
 
