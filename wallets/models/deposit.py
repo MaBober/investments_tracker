@@ -72,7 +72,7 @@ class Deposit(models.Model):
         if self.user != self.account.owner and self.user not in self.account.co_owners.all():
             raise ValidationError({'unauthorized_deposit': 'You are not authorized to make this deposit.'})
     
-        if self.currency != self.account.currency:
+        if self.currency not in self.account.currencies.all():
             raise ValidationError({'currency':'The currency of the deposit must be the same as the currency of the account.'})
         
         if self.amount is None:
