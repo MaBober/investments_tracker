@@ -25,7 +25,7 @@ def test_get_accounts(admin_logged_client, test_accounts):
     assert response.data['results'][0]['wallets'] == [wallet.id for wallet in test_accounts[0].wallets.all()]
     assert response.data['results'][0]['type'] == test_accounts[0].type.name
     assert response.data['results'][0]['institution'] == test_accounts[0].institution.name
-    assert response.data['results'][0]['currency'] == test_accounts[0].currency.code
+    assert response.data['results'][0]['currencies'] == [currency.code for currency in test_accounts[0].currencies.all()]
     assert response.data['results'][0]['created_at'] == test_accounts[0].created_at.astimezone(timezone.get_current_timezone()).isoformat()
     assert response.data['results'][0]['updated_at'] == test_accounts[0].updated_at.astimezone(timezone.get_current_timezone()).isoformat()
 
@@ -63,7 +63,7 @@ def test_get_single_account_owner(api_client, test_user, test_accounts):
     assert response.data['wallets'] == [wallet.id for wallet in account_to_test.wallets.all()]
     assert response.data['type'] == account_to_test.type.name
     assert response.data['institution'] == account_to_test.institution.name
-    assert response.data['currency'] == account_to_test.currency.code
+    assert response.data['currencies'] == [currency.code for currency in account_to_test.currencies.all()]
     assert response.data['created_at'] == account_to_test.created_at.astimezone(timezone.get_current_timezone()).isoformat()
     assert response.data['updated_at'] == account_to_test.updated_at.astimezone(timezone.get_current_timezone()).isoformat()
 
@@ -89,7 +89,7 @@ def test_get_single_account_co_owner(api_client, test_user, test_accounts):
     assert response.data['wallets'] == [wallet.id for wallet in account_to_test.wallets.all()]
     assert response.data['type'] == account_to_test.type.name
     assert response.data['institution'] == account_to_test.institution.name
-    assert response.data['currency'] == account_to_test.currency.code
+    assert response.data['currencies'] == [currency.code for currency in account_to_test.currencies.all()]
     assert response.data['created_at'] == account_to_test.created_at.astimezone(timezone.get_current_timezone()).isoformat()
     assert response.data['updated_at'] == account_to_test.updated_at.astimezone(timezone.get_current_timezone()).isoformat()
 
@@ -143,7 +143,7 @@ def test_create_account(authenticated_client, test_user, test_wallets, test_acco
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code, test_currencies[1].code],
         "description": "Checking account description",
         "owner": test_user[0].id,
         "co_owners": [test_user[1].id, test_user[2].id]
@@ -157,8 +157,7 @@ def test_create_account(authenticated_client, test_user, test_wallets, test_acco
     assert response.data['owner_id'] == data['owner']
     assert response.data['type'] == test_account_types[0].name
     assert response.data['institution'] == test_institution[0].name
-    assert response.data['currency'] == test_currencies[0].code
-
+    assert response.data['currencies'] == data['currencies']
 
 @pytest.mark.django_db
 def test_create_account_add_owned_wallet(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -172,7 +171,7 @@ def test_create_account_add_owned_wallet(authenticated_client, test_user, test_w
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies":[ test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -188,7 +187,7 @@ def test_create_account_add_owned_wallet(authenticated_client, test_user, test_w
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[0].name
     assert response.data['institution'] == test_institution[0].name
-    assert response.data['currency'] == test_currencies[0].code
+    assert response.data['currencies'] == data['currencies']
 
 
 @pytest.mark.django_db    
@@ -204,7 +203,7 @@ def test_create_account_add_co_owned_wallet(authenticated_client, test_user, tes
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -220,7 +219,7 @@ def test_create_account_add_co_owned_wallet(authenticated_client, test_user, tes
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[0].name
     assert response.data['institution'] == test_institution[0].name
-    assert response.data['currency'] == test_currencies[0].code
+    assert response.data['currencies'] == data['currencies']
 
 @pytest.mark.django_db
 def test_create_account_other_institution(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -230,7 +229,7 @@ def test_create_account_other_institution(authenticated_client, test_user, test_
         "type": test_account_types[0].name,
         "institution": "Other",
         "other_institution": "Other Institution",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -247,7 +246,7 @@ def test_create_account_other_institution(authenticated_client, test_user, test_
     assert response.data['type'] == test_account_types[0].name
     assert response.data['institution'] == "Other"
     assert response.data['other_institution'] == data['other_institution']
-    assert response.data['currency'] == test_currencies[0].code
+    assert response.data['currencies'] == data['currencies']
 
 @pytest.mark.django_db
 def test_create_account_other_institution_no_other(authenticated_client, test_user, test_wallets, test_account_types, test_account_institution_types, test_institution, test_currencies):
@@ -256,7 +255,7 @@ def test_create_account_other_institution_no_other(authenticated_client, test_us
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": "Other",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -277,7 +276,7 @@ def test_create_account_other_institution_other_empty_string(authenticated_clien
         "type": test_account_types[0].name,
         "institution": "Other",
         "other_institution": "",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -299,7 +298,7 @@ def test_create_account_institution_selected_and_other(authenticated_client, tes
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
         "other_institution": "Other Institution",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -320,7 +319,7 @@ def test_create_account_no_auth(api_client, test_user, test_wallets, test_accoun
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -338,7 +337,7 @@ def test_create_account_no_name(authenticated_client, test_user, test_wallets, t
     data = {
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -359,7 +358,7 @@ def test_create_account_too_short_name(authenticated_client, test_user, test_wal
         "name": "A",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -380,7 +379,7 @@ def test_create_account_too_long_name(authenticated_client, test_user, test_wall
         "name": "A" * 101,
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -400,7 +399,7 @@ def test_create_account_no_type(authenticated_client, test_user, test_wallets, t
     data = {
         "name": "Checking Account",
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -421,7 +420,7 @@ def test_create_account_type_empty_string(authenticated_client, test_user, test_
         "name": "Checking Account",
         "type": "",
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -442,7 +441,7 @@ def test_create_account_not_existing_type(authenticated_client, test_user, test_
         "name": "Checking Account",
         "type": "Not Existing",
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -462,7 +461,7 @@ def test_create_account_no_institution(authenticated_client, test_user, test_wal
     data = {
         "name": "Checking Account",
         "type": test_account_types[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -483,7 +482,7 @@ def test_create_account_institution_empty_string(authenticated_client, test_user
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": "",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -504,7 +503,7 @@ def test_create_account_not_existing_institution(authenticated_client, test_user
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": "Not Existing",
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -533,7 +532,7 @@ def test_create_account_no_currency(authenticated_client, test_user, test_wallet
 
     check_account_create_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
+                                    error_field='currencies',
                                     error_message='This field is required.',
                                     other_wallets=Account.objects.count())
     
@@ -545,7 +544,7 @@ def test_create_account_currency_empty_string(authenticated_client, test_user, t
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": "",
+        "currencies": "",
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -554,8 +553,8 @@ def test_create_account_currency_empty_string(authenticated_client, test_user, t
 
     check_account_create_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
-                                    error_message='This field may not be null.',
+                                    error_field='currencies',
+                                    error_message='Expected a list of items but got type "str".',
                                     other_wallets=Account.objects.count())
 
     
@@ -566,7 +565,7 @@ def test_create_account_not_existing_currency(authenticated_client, test_user, t
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": "Not Existing",
+        "currencies": ["Not Existing"],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -575,7 +574,7 @@ def test_create_account_not_existing_currency(authenticated_client, test_user, t
 
     check_account_create_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
+                                    error_field='currencies',
                                     error_message='Currency with short name Not Existing does not exist.',
                                     other_wallets=Account.objects.count())
     
@@ -587,7 +586,7 @@ def test_create_account_not_existing_wallet(authenticated_client, test_user, tes
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [100],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -612,7 +611,7 @@ def test_create_account_add_wallet_not_owned(authenticated_client, test_user, te
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[1].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -632,7 +631,7 @@ def test_create_account_too_long_description(authenticated_client, test_user, te
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "A" * 1001,
         "owner": test_user[0].id,
@@ -652,7 +651,7 @@ def test_create_account_not_existing_co_owner(authenticated_client, test_user, t
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -672,7 +671,7 @@ def test_create_account_owner_as_co_owner(authenticated_client, test_user, test_
         "name": "Checking Account",
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -694,7 +693,7 @@ def test_create_duplicated_name(authenticated_client, test_user, test_wallets, t
         "name": existing_user_account.name,
         "type": test_account_types[0].name,
         "institution": test_institution[0].name,
-        "currency": test_currencies[0].code,
+        "currencies": [test_currencies[0].code],
         "wallets": [test_wallets[0].id],
         "description": "Checking account description",
         "owner": test_user[0].id,
@@ -723,7 +722,7 @@ def test_update_account_by_owner(api_client, test_user, test_accounts, test_wall
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code, test_currencies[2].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -738,7 +737,7 @@ def test_update_account_by_owner(api_client, test_user, test_accounts, test_wall
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[1].name
     assert response.data['institution'] == test_institution[1].name
-    assert response.data['currency'] == test_currencies[1].code
+    assert response.data['currencies'] == [currency.code for currency in account_to_update.currencies.all()]
 
 
 @pytest.mark.django_db
@@ -761,7 +760,7 @@ def test_update_account_by_co_owner(api_client, test_user, test_accounts, test_w
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -776,7 +775,7 @@ def test_update_account_by_co_owner(api_client, test_user, test_accounts, test_w
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[1].name
     assert response.data['institution'] == test_institution[1].name
-    assert response.data['currency'] == test_currencies[1].code
+    assert response.data['currencies'] == [currency.code for currency in account_to_update.currencies.all()]
 
 
 @pytest.mark.django_db
@@ -797,7 +796,7 @@ def test_update_account_to_other_institution(authenticated_client, test_user, te
         "type": test_account_types[1].name,
         "institution": "Other",
         "other_institution": "Other Institution",
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -813,7 +812,7 @@ def test_update_account_to_other_institution(authenticated_client, test_user, te
     assert response.data['type'] == test_account_types[1].name
     assert response.data['institution'] == "Other"
     assert response.data['other_institution'] == data['other_institution']
-    assert response.data['currency'] == test_currencies[1].code
+    assert response.data['currencies'] == [currency.code for currency in account_to_update.currencies.all()]
 
 
 @pytest.mark.django_db
@@ -836,7 +835,7 @@ def test_update_account_by_co_owner(api_client, test_user, test_accounts, test_w
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -851,7 +850,7 @@ def test_update_account_by_co_owner(api_client, test_user, test_accounts, test_w
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[1].name
     assert response.data['institution'] == test_institution[1].name
-    assert response.data['currency'] == test_currencies[1].code
+    assert response.data['currencies'] == [currency.code for currency in account_to_update.currencies.all()]
 
 
 @pytest.mark.django_db
@@ -870,7 +869,7 @@ def test_update_account_leave_old_name(authenticated_client, test_user, test_acc
         "name": account_to_update.name,
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -885,7 +884,7 @@ def test_update_account_leave_old_name(authenticated_client, test_user, test_acc
     assert response.data['wallets'] == data['wallets']
     assert response.data['type'] == test_account_types[1].name
     assert response.data['institution'] == test_institution[1].name
-    assert response.data['currency'] == test_currencies[1].code
+    assert response.data['currencies'] == [currency.code for currency in account_to_update.currencies.all()]
 
 
 @pytest.mark.django_db
@@ -897,7 +896,7 @@ def test_update_account_no_auth(api_client, test_user, test_accounts, test_walle
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -928,7 +927,7 @@ def test_update_account_by_nor_owner_or_co_owner(api_client, test_user, test_acc
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id]
@@ -964,7 +963,7 @@ def test_update_account_to_other_institution_no_other(authenticated_client, test
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": "Other",
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "owner": account_to_update.owner.id,
@@ -995,7 +994,7 @@ def test_update_account_institution_selected_and_other(authenticated_client, tes
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
         "other_institution": "Other Institution",
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1018,7 +1017,7 @@ def test_update_account_no_name(authenticated_client, test_user, test_accounts, 
     data = {
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1048,7 +1047,7 @@ def test_update_account_too_short_name(authenticated_client, test_user, test_acc
         "name": "A",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1078,7 +1077,7 @@ def test_update_account_too_long_name(authenticated_client, test_user, test_acco
         "name": "A" * 101,
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1101,7 +1100,7 @@ def test_update_account_no_type(authenticated_client, test_user, test_accounts, 
     data = {
         "name": "Updated Account",
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1129,7 +1128,7 @@ def test_update_account_type_empty_string(authenticated_client, test_user, test_
         "name": "Updated Account",
         "type": "",
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies":[ test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1154,7 +1153,7 @@ def test_update_account_not_existing_type(authenticated_client, test_user, test_
         "name": "Updated Account",
         "type": "Not Existing",
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1184,7 +1183,7 @@ def test_update_account_no_institution(authenticated_client, test_user, test_acc
     data = {
         "name": "Updated Account",
         "type": test_account_types[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1213,7 +1212,7 @@ def test_update_account_institution_empty_string(authenticated_client, test_user
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": "",
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1241,7 +1240,7 @@ def test_update_account_not_existing_institution(authenticated_client, test_user
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": "Not Existing",
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1279,7 +1278,7 @@ def test_update_account_no_currency(authenticated_client, test_user, test_accoun
 
     check_account_update_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
+                                    error_field='currencies',
                                     error_message='This field is required.',
                                     other_wallets=Account.objects.count())
     
@@ -1297,7 +1296,7 @@ def test_update_account_currency_empty_string(authenticated_client, test_user, t
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": "",
+        "currencies": "",
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1307,8 +1306,8 @@ def test_update_account_currency_empty_string(authenticated_client, test_user, t
 
     check_account_update_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
-                                    error_message='This field may not be null.',
+                                    error_field='currencies',
+                                    error_message='Expected a list of items but got type "str".',
                                     other_wallets=Account.objects.count())
     
 @pytest.mark.django_db
@@ -1325,7 +1324,7 @@ def test_update_account_not_existing_currency(authenticated_client, test_user, t
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": "Not Existing",
+        "currencies": ["Not Existing"],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1335,7 +1334,7 @@ def test_update_account_not_existing_currency(authenticated_client, test_user, t
 
     check_account_update_validation(authenticated_client,
                                     data=data,
-                                    error_field='currency',
+                                    error_field='currencies',
                                     error_message='Currency with short name Not Existing does not exist.',
                                     other_wallets=Account.objects.count())
     
@@ -1350,7 +1349,7 @@ def test_update_account_not_existing_wallet(authenticated_client, test_user, tes
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [100],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1376,7 +1375,7 @@ def test_update_account_too_long_description(authenticated_client, test_user, te
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "A" * 1001,
         "co_owners": [test_user[2].id, test_user[3].id],
@@ -1401,7 +1400,7 @@ def test_update_account_not_existing_co_owner(authenticated_client, test_user, t
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [100],
@@ -1426,7 +1425,7 @@ def test_update_account_owner_as_co_owner(authenticated_client, test_user, test_
         "name": "Updated Account",
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[0].id],
@@ -1459,7 +1458,7 @@ def test_update_duplicated_name(authenticated_client, test_user, test_accounts, 
         "name": second_account.name,
         "type": test_account_types[1].name,
         "institution": test_institution[1].name,
-        "currency": test_currencies[1].code,
+        "currencies": [test_currencies[1].code],
         "wallets": [test_wallets[1].id],
         "description": "Updated account description",
         "co_owners": [test_user[2].id, test_user[3].id],

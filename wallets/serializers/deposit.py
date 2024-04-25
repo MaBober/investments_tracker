@@ -87,7 +87,7 @@ class DepositCreateSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return value
 
-        if value != account.currency:
+        if value not in account.currencies.all():
             raise serializers.ValidationError('This currency is not supported by this account.')
         
         return value
