@@ -60,9 +60,6 @@ class DepositCreateSerializer(serializers.ModelSerializer):
         }
     )
 
-    amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=True, min_value=0.01)
-    description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
-    deposited_at = serializers.DateTimeField(required=True)
 
     class Meta:
         model = Deposit

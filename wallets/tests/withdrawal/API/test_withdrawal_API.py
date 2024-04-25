@@ -16,7 +16,7 @@ from wallets.tests.withdrawal.test_fixture import test_withdrawals
 
 @pytest.mark.django_db
 def test_get_withdrawals(admin_logged_client, test_withdrawals):
-    response = admin_logged_client.get(api_url('withdrawals/'))
+    response = admin_logged_client.get(api_url('withdr awals/'))
 
     assert response.status_code == 200
     assert response.data['count'] == len(test_withdrawals)
@@ -588,7 +588,8 @@ def test_create_withdrawal_witdrawn_at_future_date(api_client, test_user, test_a
                                         withdrawal_data,
                                         'withdrawn_at',
                                         'Date cannot be in the future.',
-                                        user_to_authenticate=test_accounts[0].owner)
+                                        user_to_authenticate=test_accounts[0].owner,
+                                        deposit=200)
         
 @pytest.mark.django_db
 def test_update_withdrawal_owner(api_client, test_user, test_accounts, test_currencies, test_wallets, test_withdrawals):
@@ -675,6 +676,8 @@ def check_withdrawal_create_validations(api_client, withdrawal_data, error_field
         )
 
     response = api_client.post(api_url('withdrawals/'), withdrawal_data)
+
+    print(response.data)
 
     assert Withdrawal.objects.count() == 0
 

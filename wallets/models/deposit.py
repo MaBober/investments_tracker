@@ -82,10 +82,11 @@ class Deposit(models.Model):
     def save(self, *args, **kwargs):
         is_new = self.pk is None
 
-        self.full_clean()
-        super().save(*args, **kwargs)
-
         if is_new:
+
+            self.full_clean()
+            super().save(*args, **kwargs)
+
             self.account.add_deposit(self)
 
         else:
