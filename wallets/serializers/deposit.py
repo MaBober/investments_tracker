@@ -60,22 +60,19 @@ class DepositCreateSerializer(serializers.ModelSerializer):
         }
     )
 
-    amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=True, min_value=0.01)
-    description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
-    deposited_at = serializers.DateTimeField(required=True)
 
     class Meta:
         model = Deposit
         fields = ['id', 'wallet', 'account', 'user_id', 'amount', 'currency', 'description', 'deposited_at']
 
-    def validate_wallet_id(self, value):
+    def validate_wallet(self, value):
 
         if value.owner != self.context['request'].user and self.context['request'].user not in value.co_owners.all():
             raise serializers.ValidationError('You do not own this wallet.')
 
         return value
     
-    def validate_account_id(self, value):
+    def validate_account(self, value):
 
         if value.owner != self.context['request'].user and self.context['request'].user not in value.co_owners.all():
             raise serializers.ValidationError('You do not own this account.')
@@ -94,3 +91,15 @@ class DepositCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This currency is not supported by this account.')
         
         return value
+    
+
+    def validate(self, data):
+
+        wallet = data.get('wallet')
+        account = data.get('account')
+
+        if wallet and account:
+            if not wallet.accounts.filter(pk=account.pk).exists():
+                raise serializers.ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a deposit.'})
+
+        return data

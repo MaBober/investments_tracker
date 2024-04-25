@@ -95,7 +95,7 @@ class Withdrawal(models.Model):
             self.account.add_withdrawal(self)
 
         else:
-            raise ValidationError({'update_sell_transaction': 'Updating sell transaction will be added soon.'})
+            raise ValidationError({'update_withdrawal': 'Updating withdrawals will be added soon.'})
 
     def delete(self, *args, **kwargs):
 

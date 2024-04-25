@@ -12,7 +12,6 @@ from wallets.tests.wallet.test_fixture import test_wallets
 @pytest.mark.django_db
 def test_account_udpate(test_user, test_account_types, test_account_institution_types, test_institution, test_wallets, test_accounts, test_currencies):
 
-    account_to_update = test_accounts[0]
     
     for i in range(0, 2):
 
@@ -33,7 +32,7 @@ def test_account_udpate(test_user, test_account_types, test_account_institution_
         # Check the attributes of the account
 
         assert account.name == 'Updated Account Name' + str([i])
-        assert account.owner == test_user[0]
+        assert account.owner == account_to_update.owner
         assert account.co_owners == account_to_update.co_owners
         assert account.description == 'Updated Account Description'
         assert account.type == test_account_types[1]
@@ -47,8 +46,6 @@ def test_account_udpate(test_user, test_account_types, test_account_institution_
 
 @pytest.mark.django_db
 def test_account_update_wallets_to_no_wallets(test_user, test_account_types, test_account_institution_types, test_institution, test_wallets, test_accounts, test_currencies):
-
-    account_to_update = test_accounts[0]
     
     for i in range(0, 2):
 
@@ -65,7 +62,7 @@ def test_account_update_wallets_to_no_wallets(test_user, test_account_types, tes
         # Check the attributes of the account
 
         assert account.name == account_to_update.name
-        assert account.owner == test_user[0]
+        assert account.owner == account_to_update.owner
         assert account.co_owners == account_to_update.co_owners
         assert account.description == account_to_update.description
         assert account.type == account_to_update.type
@@ -220,11 +217,23 @@ def test_account_update_too_long_name(test_user, test_account_types, test_accoun
 @pytest.mark.django_db
 def test_account_update_duplicated_name(test_user, test_account_types, test_account_institution_types, test_institution, test_wallets, test_accounts, test_currencies):
         
+    #Prepare data
+
+    first_account = test_accounts[0]
+    second_account = test_accounts[1]
+
+    first_account.owner = test_user[0]
+    first_account.save()
+
+    second_account.owner = test_user[0]
+    second_account.save()
+
+
     account_to_update = test_accounts[0]
     
     check_account_validations(
-        account_to_update=account_to_update,
-        name=test_accounts[1].name,
+        account_to_update=first_account,
+        name=second_account.name,
         owner=test_user[0],
         co_owners=None,
         description='Updated Account Description',

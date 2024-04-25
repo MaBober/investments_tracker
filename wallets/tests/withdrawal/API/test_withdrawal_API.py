@@ -237,6 +237,24 @@ def test_create_withdrawal_account_not_owner_nor_co_owner(api_client, test_user,
     
 
 @pytest.mark.django_db
+def test_create_withdrawal_no_auth(api_client, test_user, test_accounts, test_currencies, test_wallets):
+
+    withdrawal_data = {
+        'wallet': test_wallets[0].id,
+        'account': test_accounts[0].id,
+        'amount': 100.00,
+        'currency': test_currencies[0].code,
+        'description': 'Withdrawal 1',
+        'withdrawn_at': timezone.now()
+    }
+
+    response = api_client.post(api_url('withdrawals/'), withdrawal_data)
+
+    assert response.status_code == 401
+    assert response.data['detail'] == 'Authentication credentials were not provided.'
+    
+
+@pytest.mark.django_db
 def test_create_withdrawal_account_no_wallet(api_client, test_user, test_accounts, test_currencies, test_wallets):
 
     withdrawal_data = {
@@ -314,8 +332,6 @@ def test_create_withdrawal_not_exisitng_account(api_client, test_user, test_acco
 def test_create_withdrawal_from_account_not_matching_wallet(api_client, test_user, test_accounts, test_currencies, test_wallets):
                     
     # Prepare data
-
-
 
     Deposit.objects.create(
         wallet=test_wallets[1],
@@ -541,38 +557,39 @@ def test_create_withdrawal_no_withdrawn_at(api_client, test_user, test_accounts,
 @pytest.mark.django_db
 def test_create_widthrawal_witdrawn_at_no_date(api_client, test_user, test_accounts, test_currencies, test_wallets):
                                                                                 
-        withdrawal_data = {
-            'wallet': test_wallets[0].id,
-            'account': test_accounts[0].id,
-            'amount': 100.00,
-            'currency': test_currencies[0].code,
-            'description': 'Withdrawal 1',
-            'withdrawn_at': 'AAAA'
-        }
+    withdrawal_data = {
+        'wallet': test_wallets[0].id,
+        'account': test_accounts[0].id,
+        'amount': 100.00,
+        'currency': test_currencies[0].code,
+        'description': 'Withdrawal 1',
+        'withdrawn_at': 'AAAA'
+    }
 
-        check_withdrawal_create_validations(api_client,
-                                            withdrawal_data,
-                                            'withdrawn_at',
-                                            'Datetime has wrong format. Use one of these formats instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].',
-                                            user_to_authenticate=test_accounts[0].owner)
+    check_withdrawal_create_validations(api_client,
+                                        withdrawal_data,
+                                        'withdrawn_at',
+                                        'Datetime has wrong format. Use one of these formats instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].',
+                                        user_to_authenticate=test_accounts[0].owner)
         
 @pytest.mark.django_db
 def test_create_withdrawal_witdrawn_at_future_date(api_client, test_user, test_accounts, test_currencies, test_wallets):
                                                                                     
-        withdrawal_data = {
-            'wallet': test_wallets[0].id,
-            'account': test_accounts[0].id,
-            'amount': 100.00,
-            'currency': test_currencies[0].code,
-            'description': 'Withdrawal 1',
-            'withdrawn_at': timezone.now() + timezone.timedelta(days=1)
-        }
+    withdrawal_data = {
+        'wallet': test_wallets[0].id,
+        'account': test_accounts[0].id,
+        'amount': 100.00,
+        'currency': test_currencies[0].code,
+        'description': 'Withdrawal 1',
+        'withdrawn_at': timezone.now() + timezone.timedelta(days=1)
+    }
 
-        check_withdrawal_create_validations(api_client,
-                                            withdrawal_data,
-                                            'withdrawn_at',
-                                            'Date cannot be in the future.',
-                                            user_to_authenticate=test_accounts[0].owner)
+    check_withdrawal_create_validations(api_client,
+                                        withdrawal_data,
+                                        'withdrawn_at',
+                                        'Date cannot be in the future.',
+                                        user_to_authenticate=test_accounts[0].owner,
+                                        deposit=200)
         
 @pytest.mark.django_db
 def test_update_withdrawal_owner(api_client, test_user, test_accounts, test_currencies, test_wallets, test_withdrawals):
@@ -659,6 +676,8 @@ def check_withdrawal_create_validations(api_client, withdrawal_data, error_field
         )
 
     response = api_client.post(api_url('withdrawals/'), withdrawal_data)
+
+    print(response.data)
 
     assert Withdrawal.objects.count() == 0
 
