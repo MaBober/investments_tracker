@@ -31,7 +31,8 @@ class AccountSerializer(serializers.ModelSerializer):
         slug_field='name',
         queryset=AccountInstitution.objects.all()
     )
-    currency = serializers.SlugRelatedField(
+    currencies = serializers.SlugRelatedField(
+        many=True,
         slug_field='code',
         queryset=Currency.objects.all()
     )
@@ -39,7 +40,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currency', 'current_balance', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currencies', 'current_balance', 'created_at', 'updated_at']
 
     def to_representation(self, instance):
 
@@ -81,7 +82,8 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         required=True
     )
     other_institution = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    currency = serializers.SlugRelatedField(
+    currencies = serializers.SlugRelatedField(
+        many=True,
         slug_field='code',
         queryset=Currency.objects.all(),
         error_messages={
@@ -93,7 +95,7 @@ class AccountCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'other_institution', 'type', 'institution', 'description', 'currency']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'wallets', 'other_institution', 'type', 'institution', 'description', 'currencies']
 
     def validate(self, data):
         institution = data.get('institution').name.strip().lower()

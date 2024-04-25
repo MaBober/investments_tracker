@@ -39,7 +39,7 @@ class Transaction(models.Model):
 
             price_in_asset_currency = self.amount * self.price
 
-            if self.currency != self.account.currency:
+            if self.currency not in self.account.currencies.all():
                 price_in_account_currency = price_in_asset_currency * self.currency_price
             else:
                 price_in_account_currency = price_in_asset_currency
@@ -56,7 +56,7 @@ class Transaction(models.Model):
 
             price_in_asset_currency = self.amount * self.price
 
-            if self.currency != self.account.currency:
+            if self.currency not in self.account.currencies.all():
                 price_in_account_currency = price_in_asset_currency * self.currency_price
             else:
                 price_in_account_currency = price_in_asset_currency
