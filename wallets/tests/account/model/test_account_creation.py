@@ -18,7 +18,6 @@ def test_account_create_single_owner(test_user, test_account_types, test_institu
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0]
     )
     
@@ -32,7 +31,6 @@ def test_account_create_single_owner(test_user, test_account_types, test_institu
     assert account.name == 'Test Account'
     assert account.type == test_account_types[0]
     assert account.institution == test_institution[0]
-    assert account.currency == test_currencies[0]
     assert account.owner == test_user[0]
     assert account.co_owners.count() == 0
     assert account.created_at is not None
@@ -49,7 +47,6 @@ def test_account_add_multiple_owners(test_user, test_account_types, test_institu
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0]
     )
     
@@ -66,10 +63,44 @@ def test_account_add_multiple_owners(test_user, test_account_types, test_institu
     assert account.name == 'Test Account'
     assert account.type == test_account_types[0]
     assert account.institution == test_institution[0]
-    assert account.currency == test_currencies[0]
     assert account.owner == test_user[0]
     assert account.co_owners.count() == 1
     assert account.co_owners.first() == test_user[1]
+    assert account.created_at is not None
+    assert account.updated_at is not None
+    assert account.created_at == account.updated_at
+    assert timezone.now() - account.created_at < timezone.timedelta(seconds=1.5)
+
+
+@pytest.mark.django_db
+def test_account_create_multiple_currencies(test_user, test_account_types, test_institution, test_currencies):
+        
+    # Create an account for the user
+    account = Account.objects.create(
+        name='Test Account',
+        type=test_account_types[0],
+        institution=test_institution[0],
+        owner=test_user[0]
+    )
+    
+    account.currencies.add(test_currencies[0])
+    account.currencies.add(test_currencies[1])
+    
+    # Check that an Account object has been added to the database
+    assert Account.objects.count() == 1
+
+    # Retrieve the account from the database
+    account = Account.objects.first()
+
+    # Check the attributes of the account
+    assert account.name == 'Test Account'
+    assert account.type == test_account_types[0]
+    assert account.institution == test_institution[0]
+    assert account.owner == test_user[0]
+    assert account.co_owners.count() == 0
+    assert account.currencies.count() == 2
+    assert account.currencies.first() == test_currencies[0]
+    assert account.currencies.last() == test_currencies[1]
     assert account.created_at is not None
     assert account.updated_at is not None
     assert account.created_at == account.updated_at
@@ -90,7 +121,6 @@ def test_account_create_other_instiution(test_user, test_account_types, test_acc
         type=test_account_types[0],
         institution=other_institution,
         other_institution="Dom pana kleksa",
-        currency=test_currencies[0],
         owner=test_user[0]
     )
      
@@ -105,7 +135,6 @@ def test_account_create_other_instiution(test_user, test_account_types, test_acc
     assert account.type == test_account_types[0]
     assert account.institution.name == 'Other'
     assert account.other_institution == 'Dom pana kleksa'
-    assert account.currency == test_currencies[0]
     assert account.owner == test_user[0]
     assert account.co_owners.count() == 0
     assert account.created_at is not None
@@ -120,7 +149,6 @@ def test_account_create_no_owner(test_user, test_account_types, test_institution
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=None,
         description='This is a test account',
         error_field='owner',
@@ -135,7 +163,6 @@ def test_account_create_same_owner_and_co_owner(test_user, test_account_types, t
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='__all__',
@@ -151,7 +178,6 @@ def test_account_create_no_name(test_user, test_account_types, test_institution,
         name=None,
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='name',
@@ -165,7 +191,6 @@ def test_account_create_too_long_name(test_user, test_account_types, test_instit
         name='A'*101,
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='name',
@@ -179,7 +204,6 @@ def test_account_create_too_short_name(test_user, test_account_types, test_insti
         name='A',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='name',
@@ -194,7 +218,6 @@ def test_account_create_duplicated_name(test_user, test_account_types, test_inst
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0]
     )
 
@@ -204,7 +227,6 @@ def test_account_create_duplicated_name(test_user, test_account_types, test_inst
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='__all__',
@@ -219,7 +241,6 @@ def test_account_create_too_long_description(test_user, test_account_types, test
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='A'*1001,
         error_field='description',
@@ -233,7 +254,6 @@ def test_account_create_no_type(test_user, test_account_types, test_institution,
         name='Test Account',
         type=None,
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='type',
@@ -247,24 +267,9 @@ def test_account_create_no_institution(test_user, test_account_types, test_insti
         name='Test Account',
         type=test_account_types[0],
         institution=None,
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='institution',
-        error_message=['This field cannot be null.']
-    )
-
-@pytest.mark.django_db
-def test_account_create_no_currency(test_user, test_account_types, test_institution, test_currencies):
-        
-    check_account_validations(
-        name='Test Account',
-        type=test_account_types[0],
-        institution=test_institution[0],
-        currency=None,
-        owner=test_user[0],
-        description='This is a test account',
-        error_field='currency',
         error_message=['This field cannot be null.']
     )
 
@@ -276,7 +281,6 @@ def test_account_create_add_wallet(test_user, test_account_types, test_instituti
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
     )
     
@@ -292,7 +296,6 @@ def test_account_create_add_wallet(test_user, test_account_types, test_instituti
     assert account.name == 'Test Account'
     assert account.type == test_account_types[0]
     assert account.institution == test_institution[0]
-    assert account.currency == test_currencies[0]
     assert account.owner == test_user[0]
     assert account.co_owners.count() == 0
     assert account.wallets.first() == test_wallets[0]
@@ -310,7 +313,6 @@ def test_account_create_with_wallet_not_owned_by_user(test_user, test_account_ty
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='wallets',
@@ -326,7 +328,6 @@ def test_account_create_with_instituion_selecteded_and_other_institution(test_us
         name='Test Account',
         type=test_account_types[0],
         institution=test_institution[0],
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='__all__',
@@ -348,7 +349,6 @@ def test_account_create_with_other_institution_selecteded_and_no_other_instituti
         name='Test Account',
         type=test_account_types[0],
         institution=other_institution,
-        currency=test_currencies[0],
         owner=test_user[0],
         description='This is a test account',
         error_field='__all__',
@@ -358,14 +358,13 @@ def test_account_create_with_other_institution_selecteded_and_no_other_instituti
 
 
 
-def check_account_validations(name, type, institution, currency, owner, description, error_field, error_message, other_wallets = 0, co_owners =[], wallets=[], other_institution=''):
+def check_account_validations(name, type, institution, owner, description, error_field, error_message, other_wallets = 0, co_owners =[], wallets=[], currencies=[], other_institution=''):
 
     with pytest.raises(ValidationError) as exception_info:
         account = Account.objects.create(
             name=name,
             type=type,
             institution=institution,
-            currency=currency,
             owner=owner,
             description=description,
             other_institution=other_institution
@@ -374,6 +373,14 @@ def check_account_validations(name, type, institution, currency, owner, descript
         if wallets:
             for wallet in wallets:
                 account.wallets.add(wallet)
+
+        if co_owners:
+            for co_owner in co_owners:
+                account.co_owners.add(co_owner)
+        
+        if currencies:
+            for currency in currencies:
+                account.currencies.add(currency)        
     
 
     assert Account.objects.count() == other_wallets

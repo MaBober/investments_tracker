@@ -18,7 +18,6 @@ def test_get_accounts(admin_logged_client, test_accounts):
     response = admin_logged_client.get(api_url('accounts/'))
     
     assert response.status_code == 200
-    print(response.data)
     assert response.data['count'] == len(test_accounts)
     assert response.data['results'][0]['name'] == test_accounts[0].name
     assert response.data['results'][0]['description'] == test_accounts[0].description
