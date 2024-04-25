@@ -89,8 +89,6 @@ def test_get_deposit_not_found(authenticated_client):
 def test_get_deposit_no_creator(api_client, test_deposits, test_user):
 
     deposit_to_test = test_deposits[0]
-    deposit_to_test.user = test_user[0]
-    deposit_to_test.save()
 
     api_client.force_authenticate(user=test_user[1])
     response = api_client.get(api_url(f'deposits/{deposit_to_test.id}/'))
@@ -553,8 +551,6 @@ def test_delete_deposit_not_found(authenticated_client):
 def test_delete_deposit_no_creator(api_client, test_deposits, test_user):
 
     deposit_to_delete = test_deposits[0]
-    deposit_to_delete.user = test_user[0]
-    deposit_to_delete.save()
 
     api_client.force_authenticate(user=test_user[1])
     response = api_client.delete(api_url(f'deposits/{deposit_to_delete.id}/'))

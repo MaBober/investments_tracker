@@ -16,7 +16,7 @@ from wallets.tests.withdrawal.test_fixture import test_withdrawals
 
 @pytest.mark.django_db
 def test_get_withdrawals(admin_logged_client, test_withdrawals):
-    response = admin_logged_client.get(api_url('withdr awals/'))
+    response = admin_logged_client.get(api_url('withdrawals/'))
 
     assert response.status_code == 200
     assert response.data['count'] == len(test_withdrawals)
