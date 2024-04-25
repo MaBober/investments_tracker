@@ -133,7 +133,7 @@ def test_deposit_create_with_currency_not_in_db(test_user, test_wallets, test_ac
         description='This is a test deposit',
         deposited_at=timezone.now() - timezone.timedelta(days=1),
         error_field='currency',
-        error_message='Cannot assign "\'XXX\'": "Deposit.currency" must be a "Currency" instance.'
+        error_message='Cannot assign "\'XYZ\'": "Deposit.currency" must be a "Currency" instance.'
     )
 
 @pytest.mark.django_db
@@ -244,8 +244,8 @@ def test_deposit_create_on_account_not_in_wallet(test_user, test_wallets, test_a
         currency=test_currencies[0],
         description='This is a test deposit',
         deposited_at=timezone.now() - timezone.timedelta(days=1),
-        error_field='account',
-        error_message='Account does not belong to the wallet.'
+        error_field='account_wallet_mismatch',
+        error_message='The account must belong to the wallet to make a deposit.'
     )
 
 @pytest.mark.django_db
@@ -385,7 +385,7 @@ def test_deposit_on_account_co_owner(test_user, test_wallets, test_accounts, tes
 
 def check_deposit_validations(wallet, account, user, amount, currency, description, deposited_at, error_field, error_message):
 
-    with pytest.raises((ValidationError, ObjectDoesNotExist)) as exception_info:
+    with pytest.raises((ValidationError, ObjectDoesNotExist, ValueError)) as exception_info:
         Deposit.objects.create(
             wallet=wallet,
             account=account,

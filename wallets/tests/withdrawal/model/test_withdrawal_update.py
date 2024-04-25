@@ -9,7 +9,7 @@ from wallets.tests.wallet.test_fixture import test_wallets
 from wallets.tests.account.test_fixture import test_accounts, test_institution, test_account_types, test_account_institution_types
 
 @pytest.mark.django_db
-def test_depostit_update(test_user, test_wallets, test_accounts, test_currencies):
+def test_withdrawal_update(test_user, test_wallets, test_accounts, test_currencies):
     """
     Test the update of a Withdrawal model instance.
     """
@@ -47,6 +47,6 @@ def test_depostit_update(test_user, test_wallets, test_accounts, test_currencies
 
         withdrawal.save()
 
-    assert exception_info.value.message_dict['update_sell_transaction'][0] == 'Updating sell transaction will be added soon.'
+    assert exception_info.value.message_dict['update_withdrawal'][0] == 'Updating withdrawals will be added soon.'
 
 

@@ -88,6 +88,9 @@ class Deposit(models.Model):
         if is_new:
             self.account.add_deposit(self)
 
+        else:
+            raise ValidationError({'update_deposit': 'Updating deposits will be added soon.'})
+
     def delete(self, *args, **kwargs):
 
         self.account.remove_deposit(self)
