@@ -118,7 +118,37 @@ def test_deposit_create_no_currency(test_user, test_wallets, test_accounts):
         description='This is a test deposit',
         deposited_at=timezone.now() - timezone.timedelta(days=1),
         error_field='currency',
-        error_message='This field cannot be null.'
+        error_message='Deposit has no currency.'
+    )
+
+@pytest.mark.django_db
+def test_deposit_create_with_currency_not_in_db(test_user, test_wallets, test_accounts):
+
+    check_deposit_validations(
+        wallet=test_wallets[0],
+        account=test_accounts[0],
+        user=test_user[0],
+        amount=100.00,
+        currency='XYZ',
+        description='This is a test deposit',
+        deposited_at=timezone.now() - timezone.timedelta(days=1),
+        error_field='currency',
+        error_message='Cannot assign "\'XXX\'": "Deposit.currency" must be a "Currency" instance.'
+    )
+
+@pytest.mark.django_db
+def test_deposit_create_with_currency_not_in_account(test_user, test_wallets, test_accounts, test_currencies):
+
+    check_deposit_validations(
+        wallet=test_wallets[0],
+        account=test_accounts[0],
+        user=test_user[0],
+        amount=100.00,
+        currency=test_currencies[1],
+        description='This is a test deposit',
+        deposited_at=timezone.now() - timezone.timedelta(days=1),
+        error_field='currency',
+        error_message='The currency of the deposit must be the same as the currency of the account.'
     )
 
 @pytest.mark.django_db
@@ -199,116 +229,158 @@ def test_deposit_create_zero_amount(test_user, test_wallets, test_accounts, test
 #TODO: Write down all possibilities of errors regarding wallet and account ownership
 @pytest.mark.django_db
 def test_deposit_create_on_account_not_in_wallet(test_user, test_wallets, test_accounts, test_currencies):
+
+    wallet = test_wallets[0]
+    account = test_accounts[1]
+
+    account.wallets.clear()
+    account.save() 
+
+    check_deposit_validations(
+        wallet=wallet,
+        account=account,
+        user=test_user[0],
+        amount=100.00,
+        currency=test_currencies[0],
+        description='This is a test deposit',
+        deposited_at=timezone.now() - timezone.timedelta(days=1),
+        error_field='account',
+        error_message='Account does not belong to the wallet.'
+    )
+
+@pytest.mark.django_db
+def test_deposit_create_on_wallet_not_owned_by_user(test_user, test_wallets, test_accounts, test_currencies):
         
-        check_deposit_validations(
-            wallet=test_wallets[0],
-            account=test_accounts[1],
-            user=test_user[0],
+    user = test_user[1]
+    wallet = test_wallets[1]
+    account = test_accounts[1]
+
+    account.wallets.clear()
+    account.wallets.add(wallet)
+    account.save()
+
+    wallet.owner = test_user[0]
+    wallet.co_owners.clear()
+    wallet.save()
+
+
+    check_deposit_validations(
+        wallet=wallet,
+        account=account,
+        user=user,
+        amount=100.00,
+        currency=test_currencies[0],
+        description='This is a test deposit',
+        deposited_at=timezone.now() - timezone.timedelta(days=1),
+        error_field='unauthorized_deposit',
+        error_message='The user must be the owner or a co-owner of the wallet to make a deposit.'
+    )
+
+@pytest.mark.django_db
+def test_deposit_create_on_account_not_owned_by_user(test_user, test_wallets, test_accounts, test_currencies):
+            
+    user = test_user[1]
+    wallet = test_wallets[1]
+    account = test_accounts[1]
+
+    account.wallets.clear()
+    account.co_owners.clear()
+    account.owner = test_user[2]    
+    account.wallets.add(wallet)
+    account.save()
+
+    wallet.owner = test_user[1]
+    wallet.co_owners.clear()
+    wallet.save()
+
+    check_deposit_validations(
+        wallet=wallet,
+        account=account,
+        user=user,
+        amount=100.00,
+        currency=test_currencies[0],
+        description='This is a test deposit',
+        deposited_at=timezone.now() - timezone.timedelta(days=1),
+        error_field='unauthorized_deposit',
+        error_message='You are not authorized to make this deposit.'
+    )
+
+@pytest.mark.django_db
+def test_deposit_on_wallet_co_owner(test_user, test_wallets, test_accounts, test_currencies):
+    
+        wallet = test_wallets[0]
+        account = test_accounts[0]
+        user = test_user[0]
+
+        wallet.co_owners.clear()
+        wallet.owner = test_user[1]
+        wallet.co_owners.add(user)
+        wallet.save()
+
+        account.wallets.clear()
+        account.wallets.add(wallet)
+        account.save()
+    
+        Deposit.objects.create(
+            wallet=wallet,
+            account=account,
+            user=user,
             amount=100.00,
             currency=test_currencies[0],
             description='This is a test deposit',
-            deposited_at=timezone.now() - timezone.timedelta(days=1),
-            error_field='account',
-            error_message='Account does not belong to the wallet.'
+            deposited_at=timezone.now() - timezone.timedelta(days=1)
         )
+    
+        assert Deposit.objects.count() == 1
+    
+        deposit = Deposit.objects.first()
+    
+        assert deposit.wallet == wallet
+        assert deposit.account == account
+        assert deposit.user == user
+        assert deposit.amount == 100.00
+        assert deposit.currency == test_currencies[0]
 
-# @pytest.mark.django_db
-# def test_deposit_create_on_wallet_not_owned_by_user(test_user, test_wallets, test_accounts, test_currencies):
-        
-#         check_deposit_validations(
-#             wallet=test_wallets[2],
-#             account=test_accounts[0],
-#             user=test_user[0],
-#             amount=100.00,
-#             currency=test_currencies[0],
-#             description='This is a test deposit',
-#             deposited_at=timezone.now() - timezone.timedelta(days=1),
-#             error_field='wallet',
-#             error_message='Wallet does not belong to the user.'
-#         )
-
-# @pytest.mark.django_db
-# def test_deposit_create_on_account_not_owned_by_user(test_user, test_wallets, test_accounts, test_currencies):
-        
-#         check_deposit_validations(
-#             wallet=test_wallets[0],
-#             account=test_accounts[3],
-#             user=test_user[0],
-#             amount=100.00,
-#             currency=test_currencies[0],
-#             description='This is a test deposit',
-#             deposited_at=timezone.now() - timezone.timedelta(days=1),
-#             error_field='account',
-#             error_message='Account does not belong to the user.'
-#         )
-
-# @pytest.mark.django_db
-# def test_deposit_on_wallet_co_owner(test_user, test_wallets, test_accounts, test_currencies):
-
-#     wallets_with_co_owners = Wallet.objects.annotate(num_co_owners=Count('co_owners')).filter(num_co_owners__gt=0)
-#     co_owner = wallets_with_co_owners[0].co_owners.first()
-
-
-#     Deposit.objects.create(
-#         wallet=wallets_with_co_owners[0],
-#         account=test_accounts[1],
-#         user=co_owner,
-#         amount=100.00,
-#         currency=test_currencies[0],
-#         description='This is a test deposit',
-#         deposited_at=timezone.now() - timezone.timedelta(days=1)
-#     )
-
-#     assert Deposit.objects.count() == 1
-
-#     deposit = Deposit.objects.first()
-
-#     assert deposit.wallet == wallets_with_co_owners[0]
-#     assert deposit.account == test_accounts[1]
-#     assert deposit.user == co_owner
-#     assert deposit.amount == 100.00
-#     assert deposit.currency == test_currencies[0]
-
-# @pytest.mark.django_db
-# def test_deposit_on_account_co_owner(test_user, test_wallets, test_accounts, test_currencies):
-
-#     accounts_with_co_owners = Account.objects.annotate(num_co_owners=Count('co_owners')).filter(num_co_owners__gt=0)
-#     co_owner = accounts_with_co_owners[0].co_owners.first()
-
-#     Deposit.objects.create(
-#         wallet=test_wallets[0],
-#         account=accounts_with_co_owners[0],
-#         user=co_owner,
-#         amount=100.00,
-#         currency=test_currencies[0],
-#         description='This is a test deposit',
-#         deposited_at=timezone.now() - timezone.timedelta(days=1)
-#     )
-
-#     assert Deposit.objects.count() == 1
-
-#     deposit = Deposit.objects.first()
-
-#     assert deposit.wallet == test_wallets[0]
-#     assert deposit.account == accounts_with_co_owners[0]
-#     assert deposit.user == co_owner
-#     assert deposit.amount == 100.00
-#     assert deposit.currency == test_currencies[0]
 
 @pytest.mark.django_db
-def test_deposit_with_currency_not_in_account(test_user, test_wallets, test_accounts, test_currencies):
+def test_deposit_on_account_co_owner(test_user, test_wallets, test_accounts, test_currencies):
+        
+    wallet = test_wallets[0]
+    account = test_accounts[0]
+    user = test_user[0]
 
-    check_deposit_validations(
-        wallet=test_wallets[0],
-        account=test_accounts[0],
-        user=test_user[0],
+    account.co_owners.clear()
+    account.owner = test_user[1]
+    account.co_owners.add(user)
+    account.save()
+
+    wallet.owner = test_user[0]
+    wallet.co_owners.clear()
+    wallet.save()
+
+    account.wallets.clear()
+    account.wallets.add(wallet)
+    account.save()
+
+    Deposit.objects.create(
+        wallet=wallet,
+        account=account,
+        user=user,
         amount=100.00,
-        currency=test_currencies[1],
+        currency=test_currencies[0],
         description='This is a test deposit',
-        deposited_at=timezone.now() - timezone.timedelta(days=1),
-        error_field='__all__',
-        error_message='The currency of the deposit must be the same as the currency of the account.'
+        deposited_at=timezone.now() - timezone.timedelta(days=1)
     )
+
+    assert Deposit.objects.count() == 1
+
+    deposit = Deposit.objects.first()
+
+    assert deposit.wallet == wallet
+    assert deposit.account == account
+    assert deposit.user == user
+    assert deposit.amount == 100.00
+    assert deposit.currency == test_currencies[0]
 
 
 def check_deposit_validations(wallet, account, user, amount, currency, description, deposited_at, error_field, error_message):

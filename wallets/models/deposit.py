@@ -64,16 +64,20 @@ class Deposit(models.Model):
     def clean(self):
 
         if self.user != self.wallet.owner and self.user not in self.wallet.co_owners.all():
-            raise ValidationError('The user must be the owner or a co-owner of the wallet to make a deposit.')
+            raise ValidationError({'unauthorized_deposit':'The user must be the owner or a co-owner of the wallet to make a deposit.'})
         
         if self.account not in self.wallet.accounts.all():
-            raise ValidationError('The account must belong to the wallet to make a deposit.')
+            raise ValidationError({'account_wallet_mismatch':'The account must belong to the wallet to make a deposit.'})
         
         if self.user != self.account.owner and self.user not in self.account.co_owners.all():
-            raise ValidationError('The user must be the owner or a co-owner of the account to make a deposit.')
+            raise ValidationError({'unauthorized_deposit': 'You are not authorized to make this deposit.'})
     
         if self.currency != self.account.currency:
-            raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
+            raise ValidationError({'currency':'The currency of the deposit must be the same as the currency of the account.'})
+        
+        if self.amount is None:
+            raise ValidationError({'amount':'The amount of the deposit cannot be empty.'})
+
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

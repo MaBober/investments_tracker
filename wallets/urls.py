@@ -33,7 +33,7 @@ deposit_list = views.DepositViewSet.as_view({
 
 deposit_detail = views.DepositViewSet.as_view({
     'get': 'retrieve',
-    'put': 'update',
+    #'put': 'update',
     'delete': 'destroy'
 })
 
