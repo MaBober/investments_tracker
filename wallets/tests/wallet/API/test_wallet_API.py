@@ -48,15 +48,15 @@ def test_get_wallets_no_admin(authenticated_client, test_user, test_wallets):
 
 
 @pytest.mark.django_db
-def test_get_single_wallet_owner(authenticated_client, test_user, test_wallets):
+def test_get_single_wallet_owner(api_client, test_user, test_wallets):
 
     # Make a GET request to the /wallets/1/ endpoint
     wallet_to_test = test_wallets[1]
-    authenticated_client.force_authenticate(user=wallet_to_test.owner)
+    api_client.force_authenticate(user=wallet_to_test.owner)
     
     #current user is the owner of the wallet
 
-    response = authenticated_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
+    response = api_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
 
     assert response.status_code == 200
     assert response.data['owner_id'] == str(wallet_to_test.owner.id)
@@ -68,15 +68,15 @@ def test_get_single_wallet_owner(authenticated_client, test_user, test_wallets):
 
 
 @pytest.mark.django_db
-def test_get_single_wallet_co_owner(authenticated_client, test_user, test_wallets):
+def test_get_single_wallet_co_owner(api_client, test_user, test_wallets):
     
     # Make a GET request to the /wallets/1/ endpoint
     wallet_to_test = test_wallets[1]
-    authenticated_client.force_authenticate(user=wallet_to_test.co_owners.first())
+    api_client.force_authenticate(user=wallet_to_test.co_owners.first())
     
     #current user is the co-owner of the wallet
 
-    response = authenticated_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
+    response = api_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
 
     assert response.status_code == 200
     assert response.data['owner_id'] == str(wallet_to_test.owner.id)
@@ -87,15 +87,19 @@ def test_get_single_wallet_co_owner(authenticated_client, test_user, test_wallet
     assert response.data['updated_at'] == wallet_to_test.updated_at.astimezone(timezone.get_current_timezone()).isoformat()
 
 @pytest.mark.django_db
-def test_get_single_wallet_not_owner_or_co_owner(authenticated_client, test_user, test_wallets):
+def test_get_single_wallet_not_owner_or_co_owner(api_client, test_user, test_wallets):
         
     # Make a GET request to the /wallets/1/ endpoint
     wallet_to_test = test_wallets[1]
-    authenticated_client.force_authenticate(user=test_user[2])
+    wallet_to_test.owner = test_user[0]
+    wallet_to_test.co_owners.clear()
+    wallet_to_test.save()
+
+    api_client.force_authenticate(user=test_user[2])
     
     #current user is not the owner or co-owner of the wallet
 
-    response = authenticated_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
+    response = api_client.get(api_url(f'wallets/{wallet_to_test.id}/'))
 
     assert response.status_code == 403
     assert response.data.get('detail') is not None
@@ -327,7 +331,7 @@ def test_update_wallet_by_co_owner(authenticated_client, test_user, test_wallets
     assert timezone.now() - timezone.datetime.fromisoformat(response.data['updated_at']) < timezone.timedelta(seconds=1.5)
 
 @pytest.mark.django_db
-def test_update_wallet_leave_old_name(authenticated_client, test_user, test_wallets):
+def test_update_wallet_leave_old_name(api_client, test_user, test_wallets):
      
     # Make a PUT request to the /wallets/1/ endpoint
     wallet_to_update = test_wallets[1]
@@ -337,7 +341,8 @@ def test_update_wallet_leave_old_name(authenticated_client, test_user, test_wall
         'description': 'Updated Wallet description'
     }
 
-    response = authenticated_client.put(api_url(f'wallets/{wallet_to_update.id}/'), wallet_data, format='json')
+    api_client.force_authenticate(user=wallet_to_update.owner)
+    response = api_client.put(api_url(f'wallets/{wallet_to_update.id}/'), wallet_data, format='json')
 
     assert response.status_code == 200
     assert response.data['owner_id'] == wallet_to_update.owner.id
@@ -346,7 +351,7 @@ def test_update_wallet_leave_old_name(authenticated_client, test_user, test_wall
     assert response.data['co_owners'] == [x.id for x in wallet_to_update.co_owners.all()]
 
     # Make a GET request to the /wallets/1/ endpoint
-    response = authenticated_client.get(api_url(f'wallets/{wallet_to_update.id}/'))
+    response = api_client.get(api_url(f'wallets/{wallet_to_update.id}/'))
 
     assert response.status_code == 200
     assert response.data['owner_id'] == str(wallet_to_update.owner.id)
@@ -371,18 +376,22 @@ def test_update_wallet_no_auth(api_client, test_user, test_wallets):
     assert response.status_code == 401
 
 @pytest.mark.django_db
-def test_update_wallet_by_nor_owner_or_co_owner(authenticated_client, test_user, test_wallets):
+def test_update_wallet_by_nor_owner_or_co_owner(api_client, test_user, test_wallets):
         
     # Make a PUT request to the /wallets/1/ endpoint
     wallet_to_update = test_wallets[1]
-    authenticated_client.force_authenticate(user=test_user[2])
+    wallet_to_update.owner = test_user[0]
+    wallet_to_update.co_owners.clear()
+    wallet_to_update.save()
+
+    api_client.force_authenticate(user=test_user[2])
 
     wallet_data = {
         'name': 'Updated Wallet',
         'description': 'Updated Wallet description'
     }
 
-    response = authenticated_client.put(api_url(f'wallets/{wallet_to_update.id}/'), wallet_data, format='json')
+    response = api_client.put(api_url(f'wallets/{wallet_to_update.id}/'), wallet_data, format='json')
 
     assert response.status_code == 403
     assert response.data.get('detail') is not None

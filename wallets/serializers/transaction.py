@@ -107,19 +107,3 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         data['asset'] = asset
 
         return data
-
-    # def to_internal_value(self, data):
-
-
-        
-    #     print(asset)
-        
-    #     data['asset'] = asset
-    #     print(f'Before pop: {data}')
-
-    #     print(f'After pop: {data}')
-
-
-
-
-    #     return super().to_internal_value(data)

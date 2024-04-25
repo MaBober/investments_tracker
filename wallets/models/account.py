@@ -69,8 +69,8 @@ class Account(BaseModel):
         The type of the account
     institution: models.CharField
         The institution of the account
-    currency: models.CharField
-        The currency of the account
+    currencies: models.ManyToManyField
+        The currencies of the account
     name: models.CharField
         The name of the account
     description: models.TextField
@@ -104,7 +104,7 @@ class Account(BaseModel):
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT)
     institution = models.ForeignKey(AccountInstitution, on_delete=models.PROTECT)
     other_institution = models.CharField(max_length=100, blank=True)
-    currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
+    currencies = models.ManyToManyField(Currency, related_name='accounts', blank=True)
 
     name = models.CharField(max_length=100, validators=[validate_name_length])
     description = models.CharField(blank=True, max_length=1000)
@@ -140,7 +140,7 @@ class Account(BaseModel):
         if deposit.account != self:
             raise ValidationError('The deposit must be made to this account.')
         
-        if deposit.currency != self.currency:
+        if deposit.currency not in self.currencies.all():
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
 
         self.current_balance += deposit.amount
@@ -154,10 +154,33 @@ class Account(BaseModel):
         if deposit.account != self:
             raise ValidationError('The deposit must be made to this account.')
         
-        if deposit.currency != self.currency:
+        if deposit.currency not in self.currencies.all():
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
 
         self.current_balance -= deposit.amount
+        self.save()
+
+    def add_withdrawal(self, withdrawal):
+        """
+        Make a withdrawal from the account
+        """
+
+        if withdrawal.account != self:
+            raise ValidationError('The withdrawal must be made from this account.')
+    
+
+        self.current_balance -= withdrawal.amount
+        self.save()
+
+    def remove_withdrawal(self, withdrawal):
+        """
+        Remove a withdrawal from the account
+        """
+
+        if withdrawal.account != self:
+            raise ValidationError('The withdrawal must be made from this account.')
+        
+        self.current_balance += withdrawal.amount
         self.save()
 
     
@@ -172,7 +195,10 @@ class Account(BaseModel):
         total_deposits = sum([deposit.amount for deposit in deposits])
         total_withdrawals = sum([withdrawal.amount for withdrawal in withdrawals])
 
-        current_balance = total_deposits - total_withdrawals
+        total_buys = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='B')])
+        total_sells = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='S')])
+
+        current_balance = total_deposits - total_withdrawals - total_buys + total_sells
 
         if current_balance != self.current_balance:
             raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.current_balance} but should be {current_balance}.')
@@ -191,7 +217,7 @@ class Account(BaseModel):
         if transaction.account != self:
             raise ValidationError('The transaction must be made with this account.')
         
-        if transaction.currency != self.currency:
+        if transaction.currency not in self.currencies.all():
             raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
         
         if transaction.transaction_type != 'B':
@@ -216,13 +242,17 @@ class Account(BaseModel):
         )
         user_asset.save()
 
+        self.current_balance -= transaction.total_price
+        self.save()
 
-    def sell_asset(self, transaction):
 
-        user_assets = transaction.user.assets.objects.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
+    def sell_assets(self, transaction):
+
+
+        user_assets = transaction.user.assets.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
 
         for user_asset in user_assets:
-            print("amount", transaction.amount)
+
             if user_asset.amount > transaction.amount:
                 user_asset.amount -= transaction.amount
                 user_asset.sell_transaction.add(transaction)
@@ -243,6 +273,9 @@ class Account(BaseModel):
                 user_asset.amount = 0
                 user_asset.sell_transaction.add(transaction)
                 user_asset.save()
+
+        self.current_balance += transaction.total_price
+        self.save()
         
 
 

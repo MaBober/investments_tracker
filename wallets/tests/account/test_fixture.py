@@ -74,19 +74,21 @@ def test_accounts(test_account_types, test_institution, test_wallets, test_user,
 
     accounts = []
     accounts_data = [
-        {'name': 'Checking Account', 'type': test_account_types[0], 'institution': test_institution[0], 'wallets': [test_wallets[0]], 'description': 'Checking account description', "owner": test_user[0], "currency": test_currencies[0], "co_owners": [test_user[1], test_user[2]]},
-        {'name': 'Savings Account', 'type': test_account_types[1], 'institution': test_institution[1], 'wallets': [test_wallets[1]], 'description': 'Savings account description', "owner": test_user[1], "currency": test_currencies[0], "co_owners": [test_user[2]]},
-        {'name': 'Credit Card', 'type': test_account_types[2], 'institution': test_institution[2], 'wallets': [test_wallets[2]], 'description': 'Credit card description', "owner": test_user[2], "currency": test_currencies[0], "co_owners": [test_user[1]]},
-        {'name': 'Investment Account', 'type': test_account_types[3], 'institution': test_institution[3], 'wallets': [test_wallets[3]], 'description': 'Investment account description', "owner": test_user[3], "currency": test_currencies[0], "co_owners": [test_user[1]]},
-        {'name': 'Retirement Account', 'type': test_account_types[4], 'institution': test_institution[4], 'wallets': [test_wallets[0]], 'description': 'Retirement account description', "owner": test_user[0], "currency": test_currencies[0], "co_owners": [test_user[1]]},
-        {'name': 'Loan Account', 'type': test_account_types[5], 'institution': test_institution[5], 'wallets': [test_wallets[0]], 'description': 'Loan account description', "owner": test_user[0], "currency": test_currencies[0], "co_owners": [test_user[1]]},
-        {'name': 'Other Account', 'type': test_account_types[6], 'institution': test_institution[6], 'wallets': [test_wallets[0]], 'description': 'Other account description', "owner": test_user[0], "currency": test_currencies[0], "co_owners": [test_user[1]]}
+        {'name': 'Checking Account', 'type': test_account_types[0], 'institution': test_institution[0], 'wallets': [test_wallets[0]], 'description': 'Checking account description', "owner": test_user[0], "currency": [test_currencies[0]], "co_owners": [test_user[1], test_user[2]]},
+        {'name': 'Savings Account', 'type': test_account_types[1], 'institution': test_institution[1], 'wallets': [test_wallets[1]], 'description': 'Savings account description', "owner": test_user[1], "currency": [test_currencies[0]], "co_owners": [test_user[2]]},
+        {'name': 'Credit Card', 'type': test_account_types[2], 'institution': test_institution[2], 'wallets': [test_wallets[2]], 'description': 'Credit card description', "owner": test_user[2], "currency": [test_currencies[0]], "co_owners": [test_user[1]]},
+        {'name': 'Investment Account', 'type': test_account_types[3], 'institution': test_institution[3], 'wallets': [test_wallets[3]], 'description': 'Investment account description', "owner": test_user[3], "currency": [test_currencies[0]], "co_owners": [test_user[1]]},
+        {'name': 'Retirement Account', 'type': test_account_types[4], 'institution': test_institution[4], 'wallets': [test_wallets[0]], 'description': 'Retirement account description', "owner": test_user[0], "currency": [test_currencies[0]], "co_owners": [test_user[1]]},
+        {'name': 'Loan Account', 'type': test_account_types[5], 'institution': test_institution[5], 'wallets': [test_wallets[0]], 'description': 'Loan account description', "owner": test_user[0], "currency": [test_currencies[0]], "co_owners": [test_user[1]]},
+        {'name': 'Other Account', 'type': test_account_types[6], 'institution': test_institution[6], 'wallets': [test_wallets[0]], 'description': 'Other account description', "owner": test_user[0], "currency": [test_currencies[0]], "co_owners": [test_user[1]]}
     ]
 
 
     for account in accounts_data:
-        accounts.append(Account.objects.create(owner=account['owner'] , name=account['name'], type=account['type'], institution=account['institution'], description=account['description'], currency=account['currency']))
+        accounts.append(Account.objects.create(owner=account['owner'] , name=account['name'], type=account['type'], institution=account['institution'], description=account['description']))
         accounts[-1].wallets.set(account['wallets'])
         accounts[-1].co_owners.set(account['co_owners'])
+        accounts[-1].currencies.set(account['currency'])
+
 
     return accounts

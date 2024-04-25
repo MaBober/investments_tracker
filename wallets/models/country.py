@@ -28,7 +28,8 @@ class Currency(models.Model):
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=100, unique=True)
     symbol = models.CharField(max_length=100, blank=True)
-    country = models.ForeignKey(Country, on_delete=models.PROTECT)
+    countries = models.ManyToManyField(Country, related_name='currencies')
+    #country = models.ForeignKey(Country, on_delete=models.PROTECT)
     description = models.CharField(blank=True, max_length=1000)
 
     created_at = models.DateTimeField(auto_now_add=True)

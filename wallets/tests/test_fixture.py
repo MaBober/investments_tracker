@@ -57,13 +57,18 @@ def test_currencies(test_countries):
     currencies_data = [
         {'name': 'Polish Zloty', 'code': 'PLN', 'symbol': 'zł', 'country': 'Poland'},
         {'name': 'US Dollar', 'code': 'USD', 'symbol': '$', 'country': 'United States'},
-        {'name': 'Euro', 'code': 'EUR', 'symbol': '€', 'country': 'Germany'},
+        {'name': 'Euro', 'code': 'EUR', 'symbol': '€', 'country': ['Germany', 'France']},
         {'name': 'British Pound', 'code': 'GBP', 'symbol': '£', 'country': 'United Kingdom'},
         {'name': 'Swiss Franc', 'code': 'CHF', 'symbol': 'CHF', 'country': 'Switzerland'}
     ]
 
     for currency in currencies_data:
-        currencies.append(Currency.objects.create(name=currency['name'], code=currency['code'], symbol=currency['symbol'], country=Country.objects.get(name=currency['country'])))
+        currencies.append(Currency.objects.create(name=currency['name'], code=currency['code'], symbol=currency['symbol']))
+        if type(currency['country']) == str:
+            currencies[-1].countries.add(Country.objects.get(name=currency['country']))
+        else:
+            for country in currency['country']:
+                currencies[-1].countries.add(Country.objects.get(name=country))
 
     return currencies
 
