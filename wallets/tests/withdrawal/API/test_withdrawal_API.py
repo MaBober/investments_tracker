@@ -123,7 +123,7 @@ def test_create_withdrawal_account_owner(api_client, test_user, test_accounts, t
         deposited_at=timezone.now()
     )
 
-    assert test_accounts[0].current_balance == new_deposit.amount
+    assert test_accounts[0].get_balance(test_currencies[0]) == new_deposit.amount
 
     withdrawal_data = {
         'wallet': test_wallets[0].id,
@@ -150,7 +150,7 @@ def test_create_withdrawal_account_owner(api_client, test_user, test_accounts, t
 
     account = Account.objects.get(id=test_accounts[0].id)
 
-    assert account.current_balance == new_deposit.amount - Decimal(withdrawal_data['amount'])
+    assert account.get_balance(new_deposit.currency) == new_deposit.amount - Decimal(withdrawal_data['amount'])
 
 
 @pytest.mark.django_db
@@ -178,7 +178,7 @@ def test_create_withdrawal_account_co_owner(api_client, test_user, test_accounts
             deposited_at=timezone.now()
         )
     
-        assert test_accounts[0].current_balance == new_deposit.amount
+        assert test_accounts[0].get_balance(test_currencies[0]) == new_deposit.amount
     
         withdrawal_data = {
             'wallet': test_wallets[0].id,
@@ -205,7 +205,7 @@ def test_create_withdrawal_account_co_owner(api_client, test_user, test_accounts
     
         account = Account.objects.get(id=test_accounts[0].id)
     
-        assert account.current_balance == new_deposit.amount - Decimal(withdrawal_data['amount'])
+        assert account.get_balance(new_deposit.currency) == new_deposit.amount - Decimal(withdrawal_data['amount'])
 
 
 @pytest.mark.django_db
@@ -676,8 +676,6 @@ def check_withdrawal_create_validations(api_client, withdrawal_data, error_field
         )
 
     response = api_client.post(api_url('withdrawals/'), withdrawal_data)
-
-    print(response.data)
 
     assert Withdrawal.objects.count() == 0
 

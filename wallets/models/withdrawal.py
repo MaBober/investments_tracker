@@ -79,8 +79,8 @@ class Withdrawal(models.Model):
         
         if self.amount is None:
             raise ValidationError({'amount':'The amount of the withdrawal cannot be empty.'})
-
-        if self.amount > self.account.current_balance:
+        
+        if self.amount > self.account.get_balance(self.currency):
             raise ValidationError({'amount':'Insufficient funds to make this withdrawal.'})
         
     def save(self, *args, **kwargs):

@@ -40,16 +40,17 @@ class AccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currencies', 'current_balance', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'name', 'wallets', 'type', 'institution', 'description', 'currencies', 'balances', 'created_at', 'updated_at']
 
     def to_representation(self, instance):
 
         representation = super().to_representation(instance)
         
-        try:
-            instance.verify_balance()
-        except ValidationError as e:
-            representation['balance_error'] = str(e)
+        for currency in instance.currencies.all():
+            try:
+                instance.verify_balance(currency)
+            except ValidationError as e:
+                representation[f'balance_error_{currency.code}'] = str(e)
 
         return representation
 
