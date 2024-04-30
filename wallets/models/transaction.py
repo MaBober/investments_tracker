@@ -45,11 +45,10 @@ class Transaction(models.Model):
             else:
                 price_in_account_currency = price_in_asset_currency
 
-
-            if self.commission_currency == self.currency:
+            if self.commission_currency in self.account.currencies.all():
                 commission = self.commission
             else:
-                commission = self.commission * self.currency_price
+                commission = self.commission * self.commission_currency_price
 
             return price_in_account_currency + commission
         
@@ -62,10 +61,10 @@ class Transaction(models.Model):
             else:
                 price_in_account_currency = price_in_asset_currency
 
-            if self.commission_currency == self.currency:
+            if self.commission_currency in self.account.currencies.all():
                 commission = self.commission
             else:
-                commission = self.commission * self.currency_price
+                commission = self.commission * self.commission_currency_price
 
             return price_in_account_currency - commission
 
