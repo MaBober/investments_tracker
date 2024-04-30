@@ -27,6 +27,7 @@ class Transaction(models.Model):
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
     commission_currency = models.ForeignKey(Currency, related_name='transactions_commission', on_delete=models.PROTECT)
+    commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     transaction_date = models.DateTimeField(null=False, blank=False)
 
