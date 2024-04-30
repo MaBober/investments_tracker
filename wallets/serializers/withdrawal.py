@@ -98,7 +98,8 @@ class WithdrawalCreateSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return value
 
-        if value > account.current_balance:
+        currency = Currency.objects.get(code=self.initial_data.get('currency'))
+        if value > account.get_balance(currency):
             raise serializers.ValidationError('Insufficient funds in the account.')
 
         return value
