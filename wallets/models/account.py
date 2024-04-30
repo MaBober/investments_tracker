@@ -113,7 +113,8 @@ class Account(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    current_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=False, null=False, default=0)
+
+    # current_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=False, null=False, default=0)
 
     class Meta:
         unique_together = ['owner', 'name']
@@ -132,6 +133,19 @@ class Account(BaseModel):
             if self.institution.name == 'Other' and (not self.other_institution or self.other_institution == ''):
                 raise ValidationError('Other institution field must not be blank if Other institution is selected.')
             
+
+    def get_balance(self, currency):
+        """
+        Get the balance of the account in the specified currency
+        """
+
+        balance = self.balances.filter(currency=currency).first()
+
+        if balance:
+            return balance.balance
+        else:
+            return 0
+            
     def add_deposit(self, deposit):
         """
         Make a deposit to the account
@@ -142,9 +156,17 @@ class Account(BaseModel):
         
         if deposit.currency not in self.currencies.all():
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
+        
+        print(self.balances.all())
+        account_currency, created = self.balances.get_or_create(
+            currency=deposit.currency,
+            defaults={'balance': deposit.amount})
 
-        self.current_balance += deposit.amount
-        self.save()
+        if not created:
+
+            account_currency.balance += deposit.amount
+            account_currency.save()
+
 
     def remove_deposit(self, deposit):
         """
@@ -157,8 +179,16 @@ class Account(BaseModel):
         if deposit.currency not in self.currencies.all():
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
 
-        self.current_balance -= deposit.amount
-        self.save()
+
+        account_currency_balance = self.balances.filter(currency=deposit.currency).first()
+
+        if account_currency_balance:
+            account_currency_balance.balance -= deposit.amount
+            account_currency_balance.save()
+
+        else:
+            raise ValidationError('The account does not have a balance in the currency of the deposit.')
+
 
     def add_withdrawal(self, withdrawal):
         """
@@ -167,10 +197,19 @@ class Account(BaseModel):
 
         if withdrawal.account != self:
             raise ValidationError('The withdrawal must be made from this account.')
-    
+        
+        if withdrawal.currency not in self.currencies.all():
+            raise ValidationError('The currency of the withdrawal must be the same as the currency of the account.')
+        
+        account_currency_balance = self.balances.filter(currency=withdrawal.currency).first()
 
-        self.current_balance -= withdrawal.amount
-        self.save()
+        if account_currency_balance:
+            account_currency_balance.balance -= withdrawal.amount
+            account_currency_balance.save()
+        
+        else:
+            raise ValidationError('The account does not have a balance in the currency of the withdrawal.')
+    
 
     def remove_withdrawal(self, withdrawal):
         """
@@ -180,11 +219,19 @@ class Account(BaseModel):
         if withdrawal.account != self:
             raise ValidationError('The withdrawal must be made from this account.')
         
-        self.current_balance += withdrawal.amount
-        self.save()
+        if withdrawal.currency not in self.currencies.all():
+            raise ValidationError('The currency of the withdrawal must be the same as the currency of the account.')
+        
+        account_currency_balance = self.balances.filter(currency=withdrawal.currency).first()
 
+        if account_currency_balance:
+            account_currency_balance.balance += withdrawal.amount
+            account_currency_balance.save()
+
+        else:
+            raise ValidationError('The account does not have a balance in the currency of the withdrawal.')
     
-    def verify_balance(self):
+    def verify_balance(self, currency):
         """
         Verify the balance of the account
         """
@@ -200,7 +247,7 @@ class Account(BaseModel):
 
         current_balance = total_deposits - total_withdrawals - total_buys + total_sells
 
-        if current_balance != self.current_balance:
+        if current_balance != self.get_balance(currency):
             raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.current_balance} but should be {current_balance}.')
         
         else:
@@ -223,7 +270,7 @@ class Account(BaseModel):
         if transaction.transaction_type != 'B':
             raise ValidationError('The type of the transaction must be BUY.')
     
-        if transaction.total_price > self.current_balance:
+        if transaction.total_price > self.get_balance(transaction.currency):
             raise ValidationError('The account does not have enough balance to make the transaction.')
 
         user_asset = UserAsset.objects.create(
@@ -242,12 +289,11 @@ class Account(BaseModel):
         )
         user_asset.save()
 
-        self.current_balance -= transaction.total_price
-        self.save()
-
+        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update.balance -= transaction.total_price
+        balance_to_update.save()
 
     def sell_assets(self, transaction):
-
 
         user_assets = transaction.user.assets.filter(asset=transaction.asset, account=self, active=True).order_by('created_at')
 
@@ -274,11 +320,20 @@ class Account(BaseModel):
                 user_asset.sell_transaction.add(transaction)
                 user_asset.save()
 
-        self.current_balance += transaction.total_price
-        self.save()
+        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update.balance += transaction.total_price
+        balance_to_update.save()
+
+
+
         
+class AccountCurrencyBalance(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='balances')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=15, decimal_places=2, blank=False, null=False, default=0)
 
+    class Meta:
+        unique_together = ['account', 'currency']
 
-
-            
-    
+    def __str__(self):
+        return f'{self.account.name} - {self.currency.code} - {self.balance}'
