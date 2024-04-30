@@ -123,7 +123,6 @@ def test_create_withdrawal_account_owner(api_client, test_user, test_accounts, t
         deposited_at=timezone.now()
     )
 
-    print(test_accounts[0].get_balance(test_currencies[0]))
     assert test_accounts[0].get_balance(test_currencies[0]) == new_deposit.amount
 
     withdrawal_data = {
@@ -179,7 +178,7 @@ def test_create_withdrawal_account_co_owner(api_client, test_user, test_accounts
             deposited_at=timezone.now()
         )
     
-        assert test_accounts[0].current_balance == new_deposit.amount
+        assert test_accounts[0].get_balance(test_currencies[0]) == new_deposit.amount
     
         withdrawal_data = {
             'wallet': test_wallets[0].id,
