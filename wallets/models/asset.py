@@ -228,8 +228,8 @@ class TreasuryBonds(RetailBonds):
     issuer_country = models.ForeignKey(Country, on_delete=models.PROTECT, limit_choices_to=limit_to_bond_countries)
 
     class Meta:
-        verbose_name = 'Government Bonds'
-        verbose_name_plural = 'Government Bonds'
+        verbose_name = 'Treasury Bonds'
+        verbose_name_plural = 'Treasury Bonds'
 
     def save(self, *args, **kwargs):
 
@@ -240,9 +240,8 @@ class TreasuryBonds(RetailBonds):
 
             self.nominal_value = Decimal('100.00')
             self.price_currency = Currency.objects.get(code='PLN')
-            self.asset_type = AssetType.objects.get(name='Government Bonds')
 
-        self.asset_type = AssetType.objects.get(name='Government Bonds')
+        self.asset_type = AssetType.objects.get(name='Treasury Bond')
 
         self.full_clean()
         super().save(*args, **kwargs)

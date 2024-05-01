@@ -242,8 +242,14 @@ class Account(BaseModel):
         total_deposits = sum([deposit.amount for deposit in deposits])
         total_withdrawals = sum([withdrawal.amount for withdrawal in withdrawals])
 
-        total_buys = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='B')])
-        total_sells = sum([transaction.total_price for transaction in self.transactions.filter(transaction_type='S')])
+        total_buys = sum(
+            [transaction.total_price for transaction in self.marketassettransaction.filter(transaction_type='B')] +
+            [transaction.total_price for transaction in self.treasurybondstransaction.filter(transaction_type='B')]
+            )
+        total_sells = sum(
+            [transaction.total_price for transaction in self.marketassettransaction.filter(transaction_type='S')] +
+            [transaction.total_price for transaction in self.treasurybondstransaction.filter(transaction_type='S')]
+            )
 
         current_balance = total_deposits - total_withdrawals - total_buys + total_sells
 

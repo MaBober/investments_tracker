@@ -37,12 +37,12 @@ deposit_detail = views.DepositViewSet.as_view({
     'delete': 'destroy'
 })
 
-transaction_list = views.TransactionViewSet.as_view({
+transaction_list = views.MarketAssetTransactionViewSet.as_view({
     'get': 'list',
     'post': 'create'
 })
 
-transaction_detail = views.TransactionViewSet.as_view({
+transaction_detail = views.MarketAssetTransactionViewSet.as_view({
     'get': 'retrieve',
     'put': 'update',
     'delete': 'destroy'

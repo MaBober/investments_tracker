@@ -77,9 +77,12 @@ class Transaction(models.Model):
     def clean(self):
 
         if self.transaction_type == 'S':
-            
-            assets = self.user.assets.filter(asset=self.asset, active=True)
-            total_amount = assets.aggregate(Sum('amount'))['amount__sum']
+            if hasattr(self, 'asset'):
+                assets = self.user.assets.filter(asset=self.asset, active=True)
+                total_amount = assets.aggregate(Sum('amount'))['amount__sum']
+            elif hasattr(self, 'bond'):
+                bonds = self.user.bonds.filter(bond=self.bond, active=True)
+                total_amount = bonds.aggregate(Sum('amount'))['amount__sum']
 
             if total_amount is None or total_amount < self.amount:
                 raise ValidationError('You do not have enough assets to sell.')
@@ -115,7 +118,6 @@ class Transaction(models.Model):
         raise ValidationError('Deleting a transaction will be added soon.')
     
 
-
 class MarketAssetTransaction(Transaction):
 
     asset = models.ForeignKey(MarketAsset, related_name='transactions', on_delete=models.CASCADE)
@@ -123,7 +125,7 @@ class MarketAssetTransaction(Transaction):
 
 class TreasuryBondsTransaction(Transaction):
 
-    bond = models.ForeignKey(TreasuryBonds, related_name='treasury_bonds_transactions', on_delete=models.CASCADE)
+    bond = models.ForeignKey(TreasuryBonds, related_name='transactions', on_delete=models.CASCADE)
 
 
 

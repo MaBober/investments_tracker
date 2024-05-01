@@ -8,7 +8,7 @@ from rest_framework.reverse import reverse
 from rest_framework import  permissions, viewsets
 
 from .models import Wallet, Account, Deposit, MarketAssetTransaction, Withdrawal
-from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, TransactionCreateSerializer, TransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer
+from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
 @api_view(['GET'])
@@ -203,7 +203,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             return WithdrawalCreateSerializer
         return WithdrawalSerializer
 
-class TransactionViewSet(viewsets.ModelViewSet):
+class MarketAssetTransactionViewSet(viewsets.ModelViewSet):
     """
     Viewset for Transaction model.
     
@@ -227,7 +227,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsOwnerOrCoOwner]
         elif self.action == 'destroy':
             self.permission_classes = [IsOwner]
-        return super(TransactionViewSet, self).get_permissions()
+        return super(MarketAssetTransactionViewSet, self).get_permissions()
 
     def perform_create(self, serializer):
         
@@ -236,5 +236,5 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         
         if self.request.method == 'POST' or self.request.method == 'PUT':
-            return TransactionCreateSerializer
-        return TransactionSerializer
+            return MarketAssetTransactionCreateSerializer
+        return MarketAssetTransactionSerializer
