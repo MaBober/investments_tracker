@@ -3,7 +3,8 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 
-from . import  Account, Wallet, Currency, MarketAsset
+from . import  Account, Wallet, Currency, MarketAsset, TreasuryBonds
+
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
@@ -11,28 +12,30 @@ class Transaction(models.Model):
         ('B', 'Buy'),
     ]
 
-    user = models.ForeignKey('auth.User', related_name='transactions', on_delete=models.CASCADE)
+    user = models.ForeignKey('auth.User', related_name='%(class)s', on_delete=models.CASCADE)
 
     transaction_type = models.CharField(max_length=1, choices=TRANSACTION_TYPES, blank=False, null=False)
 
-    account = models.ForeignKey(Account, related_name='transactions', on_delete=models.CASCADE)
-    wallet = models.ForeignKey(Wallet, related_name='transactions', on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, related_name='%(class)s', on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet, related_name='%(class)s', on_delete=models.CASCADE)
 
-    asset = models.ForeignKey(MarketAsset, related_name='transactions', on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
 
-    currency = models.ForeignKey(Currency, related_name='transactions', on_delete=models.PROTECT)
+    currency = models.ForeignKey(Currency, related_name='%(class)s', on_delete=models.PROTECT)
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    commission_currency = models.ForeignKey(Currency, related_name='transactions_commission', on_delete=models.PROTECT)
+    commission_currency = models.ForeignKey(Currency, related_name='%(class)s_commission', on_delete=models.PROTECT)
     commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     transaction_date = models.DateTimeField(null=False, blank=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
 
     @property
     def total_price(self):  
@@ -111,3 +114,17 @@ class Transaction(models.Model):
     def delete(self, *args, **kwargs):
         raise ValidationError('Deleting a transaction will be added soon.')
     
+
+
+class MarketAssetTransaction(Transaction):
+
+    asset = models.ForeignKey(MarketAsset, related_name='transactions', on_delete=models.CASCADE)
+
+
+class TreasuryBondsTransaction(Transaction):
+
+    bond = models.ForeignKey(TreasuryBonds, related_name='treasury_bonds_transactions', on_delete=models.CASCADE)
+
+
+
+

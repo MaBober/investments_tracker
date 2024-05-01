@@ -7,7 +7,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
-from .models import Wallet, Account, Deposit, Transaction, Withdrawal
+from .models import Wallet, Account, Deposit, MarketAssetTransaction, Withdrawal
 from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, TransactionCreateSerializer, TransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
@@ -214,7 +214,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         permission_classes: A list of permission classes that determine who can access this view.
     """
 
-    queryset = Transaction.objects.all()
+    queryset = MarketAssetTransaction.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     
     def get_permissions(self):

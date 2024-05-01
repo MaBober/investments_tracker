@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account, Currency, Deposit, Transaction, MarketAsset
+from wallets.models import Wallet, Account, Currency, Deposit, MarketAssetTransaction, MarketAsset
 
 class TransactionSerializer(serializers.ModelSerializer):
     """
@@ -22,7 +22,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
     class Meta:
-        model = Transaction
+        model = MarketAssetTransaction
         fields = [
             'id',
             'user_id',
@@ -79,7 +79,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
 
 
     class Meta:
-        model = Transaction
+        model = MarketAssetTransaction
         fields = ['id', 'user_id', 'account','wallet', 'code', 'exchange_market', 'transaction_type', 'amount', 'price', 'currency','currency_price', 'commission', 'commission_currency',  'transaction_date']
         extra_kwargs = {
         'code': {'write_only': True},
