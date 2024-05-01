@@ -53,6 +53,12 @@ class AccountInstitution(models.Model):
         super().save(*args, **kwargs)
     
 
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+
+
+
 class Account(BaseModel):
     """
     Account model
@@ -114,8 +120,6 @@ class Account(BaseModel):
     updated_at = models.DateTimeField(auto_now=True)
     current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
-    # current_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=False, null=False, default=0)
-
     class Meta:
         unique_together = ['owner', 'name']
 
@@ -157,7 +161,6 @@ class Account(BaseModel):
         if deposit.currency not in self.currencies.all():
             raise ValidationError('The currency of the deposit must be the same as the currency of the account.')
         
-        print(self.balances.all())
         account_currency, created = self.balances.get_or_create(
             currency=deposit.currency,
             defaults={'balance': deposit.amount})
@@ -290,6 +293,7 @@ class Account(BaseModel):
             currency_price=transaction.currency_price,
             commission=transaction.commission,
             commission_currency=transaction.commission_currency,
+            commission_currency_price=transaction.commission_currency_price,
             buy_transaction=transaction,
             active=True
         )
@@ -307,7 +311,7 @@ class Account(BaseModel):
 
             if user_asset.amount > transaction.amount:
                 user_asset.amount -= transaction.amount
-                user_asset.sell_transaction.add(transaction)
+                user_asset.sell_transactions.add(transaction)
                 user_asset.save()
 
                 break
@@ -315,7 +319,7 @@ class Account(BaseModel):
             elif user_asset.amount == transaction.amount:
                 user_asset.active = False
                 user_asset.amount = 0
-                user_asset.sell_transaction.add(transaction)
+                user_asset.sell_transactions.add(transaction)
                 user_asset.save()
                 break
 
@@ -323,13 +327,35 @@ class Account(BaseModel):
                 transaction.amount -= user_asset.amount
                 user_asset.active = False
                 user_asset.amount = 0
-                user_asset.sell_transaction.add(transaction)
+                user_asset.sell_transactions.add(transaction)
                 user_asset.save()
 
         balance_to_update = self.balances.get(currency=transaction.currency)
         balance_to_update.balance += transaction.total_price
         balance_to_update.save()
 
+
+
+@receiver(m2m_changed, sender=Account.currencies.through)
+def account_currencies_changed(sender, instance, action, **kwargs):
+    """
+    Update the account balances when the currencies of the account are changed
+    """
+
+    if action == 'post_add':
+
+        for currency in instance.currencies.all():
+            account_currency, created = instance.balances.get_or_create(
+                currency=currency,
+                defaults={'balance': 0})
+
+            # if not created:
+            #     account_currency.balance = 0
+            #     account_currency.save()
+
+        # for balance in instance.balances.all():
+        #     if balance.currency not in instance.currencies.all():
+        #         balance.delete()
 
 
         
