@@ -181,10 +181,11 @@ class UserAsset(models.Model):
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    commission_currency = models.ForeignKey(Currency, related_name='user_assets_commission', on_delete=models.PROTECT)    
+    commission_currency = models.ForeignKey(Currency, related_name='user_assets_commission', on_delete=models.PROTECT)
+    commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)    
 
     buy_transaction = models.ForeignKey('MarketAssetTransaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
-    sell_transaction = models.ManyToManyField('MarketAssetTransaction', related_name='sell_user_assets', blank=True)
+    sell_transactions = models.ManyToManyField('MarketAssetTransaction', related_name='sell_user_assets', blank=True)
 
     active = models.BooleanField(default=True, blank=False, null=False)
 
@@ -261,7 +262,7 @@ class UserTreasuryBonds(models.Model):
     maturity_date = models.DateField()
 
     buy_transaction = models.ForeignKey('TreasuryBondsTransaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
-    sell_transaction = models.ManyToManyField('TreasuryBondsTransaction', related_name='sell_user_assets', blank=True)
+    sell_transactions = models.ManyToManyField('TreasuryBondsTransaction', related_name='sell_user_assets', blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

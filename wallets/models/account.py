@@ -279,9 +279,6 @@ class Account(BaseModel):
         if transaction.transaction_type != 'B':
             raise ValidationError('The type of the transaction must be BUY.')
     
-        if transaction.total_price > self.get_balance(transaction.currency):
-            raise ValidationError('The account does not have enough balance to make the transaction.')
-
         user_asset = UserAsset.objects.create(
             user=transaction.user,
             account=transaction.account,

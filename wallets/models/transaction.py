@@ -19,8 +19,8 @@ class Transaction(models.Model):
     account = models.ForeignKey(Account, related_name='%(class)s', on_delete=models.CASCADE)
     wallet = models.ForeignKey(Wallet, related_name='%(class)s', on_delete=models.CASCADE)
 
-    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=False, null=False)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=False, null=False)
 
     currency = models.ForeignKey(Currency, related_name='%(class)s', on_delete=models.PROTECT)
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
@@ -76,7 +76,10 @@ class Transaction(models.Model):
     
     def clean(self):
 
+        self.clean_fields()
+
         if self.transaction_type == 'S':
+            
             if hasattr(self, 'asset'):
                 assets = self.user.assets.filter(asset=self.asset, active=True)
                 total_amount = assets.aggregate(Sum('amount'))['amount__sum']
@@ -85,17 +88,27 @@ class Transaction(models.Model):
                 total_amount = bonds.aggregate(Sum('amount'))['amount__sum']
 
             if total_amount is None or total_amount < self.amount:
-                raise ValidationError('You do not have enough assets to sell.')
+                raise ValidationError({"asset":'You do not have enough assets to sell.'})
+            
+
+        if self.transaction_type == 'B':
+
+            if self.account not in self.wallet.accounts.all():
+                raise ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a transaction.'})
+            
+            if self.total_price > self.account.get_balance(self.currency):
+                    raise ValidationError({"not_enough_funds":'The account does not have enough balance to make this transaction.'})
 
     def save(self, *args, **kwargs):
 
         is_new = self.pk is None
 
+        self.clean()
+
         if self.transaction_type == 'S':
 
             if is_new:
 
-                self.full_clean()
                 super().save(*args, **kwargs)
                 self.account.sell_assets(self)
 
@@ -106,9 +119,7 @@ class Transaction(models.Model):
 
             if is_new:
                
-                self.full_clean()
                 super().save(*args, **kwargs)
-
                 self.account.buy_asset(self)
 
             else:
