@@ -102,31 +102,24 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
 
         is_new = self.pk is None
+        
+        if is_new:
 
-        self.clean()
+            self.clean()
+            super().save(*args, **kwargs)
 
-        if self.transaction_type == 'S':
-
-            if is_new:
-
-                super().save(*args, **kwargs)
+            if self.transaction_type == 'S':
                 self.account.sell_assets(self)
 
-            else:
-                raise ValidationError('Updating sell transaction will be added soon.')
-
-        if self.transaction_type == 'B':
-
-            if is_new:
-               
-                super().save(*args, **kwargs)
+            if self.transaction_type == 'B':
                 self.account.buy_asset(self)
 
-            else:
-                raise ValidationError('Updating buy transaction will be added soon.')
-            
+        else:
+            raise ValidationError({'transaction_update_unavailable': 'Updating transactions will be added soon.'})
+
+
     def delete(self, *args, **kwargs):
-        raise ValidationError('Deleting a transaction will be added soon.')
+        raise ValidationError({'transaction_delete_unavailable':'Deleting a transaction will be added soon.'})
     
 
 class MarketAssetTransaction(Transaction):
