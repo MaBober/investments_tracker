@@ -37,15 +37,26 @@ deposit_detail = views.DepositViewSet.as_view({
     'delete': 'destroy'
 })
 
-transaction_list = views.MarketAssetTransactionViewSet.as_view({
+market_transaction_list = views.MarketAssetTransactionViewSet.as_view({
     'get': 'list',
     'post': 'create'
 })
 
-transaction_detail = views.MarketAssetTransactionViewSet.as_view({
+market_transaction_detail = views.MarketAssetTransactionViewSet.as_view({
     'get': 'retrieve',
-    'put': 'update',
-    'delete': 'destroy'
+    #'put': 'update',
+    #'delete': 'destroy'
+})
+
+treasury_bond_transaction_list = views.TreasuryBondsTransactionViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+
+treasury_bond_transaction_detail = views.TreasuryBondsTransactionViewSet.as_view({
+    'get': 'retrieve',
+    #'put': 'update',
+    #'delete': 'destroy'
 })
 
 withdrawal_list = views.WithdrawalViewSet.as_view({
@@ -67,8 +78,10 @@ urlpatterns = [
     path('accounts/<int:pk>/', accounts_detail, name='accounts-detail'),
     path('deposits/', deposit_list, name='deposit-list'),
     path('deposits/<int:pk>/', deposit_detail, name='deposit-detail'),
-    path('transactions/', transaction_list, name='transaction-list'),
-    path('transactions/<int:pk>/', transaction_detail, name='transaction-detail'),
+    path('market_transactions/', market_transaction_list, name='market_transaction-list'),
+    path('market_transactions/<int:pk>/', market_transaction_detail, name='market_transaction-detail'),
+    path('treasury_bond_transactions/', treasury_bond_transaction_list, name='treasury_bond_transaction-list'),
+    path('treasury_bond_transactions/<int:pk>/', treasury_bond_transaction_detail, name='treasury_bond_transaction-detail'),
     path('withdrawals/', withdrawal_list, name='withdrawal-list'),
     path('withdrawals/<int:pk>/', withdrawal_detail, name='withdrawal-detail'),
     path('users/', views.UserList.as_view(), name='user-list'),

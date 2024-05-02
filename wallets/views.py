@@ -7,8 +7,9 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
-from .models import Wallet, Account, Deposit, MarketAssetTransaction, Withdrawal
-from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer
+from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal
+from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
+
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
 @api_view(['GET'])
@@ -238,3 +239,39 @@ class MarketAssetTransactionViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST' or self.request.method == 'PUT':
             return MarketAssetTransactionCreateSerializer
         return MarketAssetTransactionSerializer
+    
+class TreasuryBondsTransactionViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for Transaction model.
+    
+    This viewset provides CRUD operations for the Transaction model.
+
+    Attributes:
+        queryset: A queryset that retrieves all the transactions from the database.
+        permission_classes: A list of permission classes that determine who can access this view.
+    """
+
+    queryset = TreasuryBondsTransaction.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        
+        if self.action == 'list':
+            self.permission_classes = [permissions.IsAdminUser]
+        elif self.action == 'create':
+            self.permission_classes = [permissions.IsAuthenticated]
+        elif self.action in ['retrieve', 'update']:
+            self.permission_classes = [IsOwnerOrCoOwner]
+        elif self.action == 'destroy':
+            self.permission_classes = [IsOwner]
+        return super(TreasuryBondsTransactionViewSet, self).get_permissions()
+
+    def perform_create(self, serializer):
+        
+        transaction = serializer.save(user=self.request.user)
+    
+    def get_serializer_class(self):
+        
+        if self.request.method == 'POST' or self.request.method == 'PUT':
+            return TreasuryBondsTransactionCreateSerializer
+        return TreasuryBondsTransactionSerializer

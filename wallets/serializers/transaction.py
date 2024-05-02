@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account, Currency, Deposit, MarketAssetTransaction, MarketAsset, Transaction
+from wallets.models import Wallet, Account, Currency, Deposit, MarketAssetTransaction, MarketAsset, Transaction, TreasuryBondsTransaction
 
 class TransactionSerializer(serializers.ModelSerializer):
     """
@@ -20,16 +20,14 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
 
-
     class Meta:
-        model = Transaction
+       # model = Transaction
         fields = [
             'id',
             'user_id',
             'transaction_type',
             'account_id',
             'wallet_id',
-            'asset',
             'amount',
             'price',
             'currency',
@@ -80,13 +78,50 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
 
 
     class Meta:
-        model = Transaction
-        fields = ['id', 'user_id', 'account','wallet', 'code', 'exchange_market', 'transaction_type', 'amount', 'price', 'currency','currency_price', 'commission', 'commission_currency',  'transaction_date']
+        # model = Transaction
+        fields = ['id', 'user_id', 'account', 'wallet', 'transaction_type', 'amount', 'price', 'currency','currency_price', 'commission', 'commission_currency',  'transaction_date']
+        abstract = True
+
+
+class MarketAssetTransactionSerializer(TransactionSerializer):
+    """
+    Serializer for the MarketAssetTransaction model.
+
+    This serializer is used to convert MarketAssetTransaction model instances into JSON
+    representations and vice versa. It specifies the fields that should be
+    included in the serialized output.
+    """
+
+    class Meta:
+        model = MarketAssetTransaction
+        market_asset_fields = TransactionSerializer.Meta.fields.copy()
+        market_asset_fields.append('asset')
+        fields = market_asset_fields
+
+class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
+    """
+    Serializer for creating a MarketAssetTransaction model instance.
+
+    This serializer is used to convert JSON data into a MarketAssetTransaction model instance.
+    """
+
+    asset_code = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MarketAssetTransaction
+        market_asset_fields = TransactionCreateSerializer.Meta.fields.copy()
+        market_asset_fields.extend(['code', 'exchange_market', 'asset_code'])
+
+        fields = market_asset_fields
+
         extra_kwargs = {
         'code': {'write_only': True},
         'exchange_market': {'write_only': True},
+        'asset' : {'read_only': True,'required': False}
         }
-        abstract = True
+
+    def get_asset_code(self, obj):
+        return obj.asset.code
 
     def validate(self, data):
 
@@ -109,28 +144,37 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         data['asset'] = asset
 
         return data
-    
 
-class MarketAssetTransactionSerializer(TransactionSerializer):
+
+class TreasuryBondsTransactionSerializer(TransactionSerializer):
     """
-    Serializer for the MarketAssetTransaction model.
+    Serializer for the TreasuryBondsTransaction model.
 
-    This serializer is used to convert MarketAssetTransaction model instances into JSON
+    This serializer is used to convert TreasuryBondsTransaction model instances into JSON
     representations and vice versa. It specifies the fields that should be
     included in the serialized output.
     """
 
     class Meta:
-        model = MarketAssetTransaction
-        fields = TransactionSerializer.Meta.fields
+        model = TreasuryBondsTransaction
 
-class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
+        bond_fields = TransactionSerializer.Meta.fields.copy()
+  
+
+        fields = bond_fields
+
+class TreasuryBondsTransactionCreateSerializer(TransactionCreateSerializer):
     """
-    Serializer for creating a MarketAssetTransaction model instance.
-
-    This serializer is used to convert JSON data into a MarketAssetTransaction model instance.
+    Serializer for creating a TreasuryBondsTransaction model instance.
+    
+    This serializer is used to convert JSON data into a TreasuryBondsTransaction model instance.
     """
 
     class Meta:
-        model = MarketAssetTransaction
-        fields = TransactionCreateSerializer.Meta.fields
+        model = TreasuryBondsTransaction
+
+        bond_fields = TransactionCreateSerializer.Meta.fields
+
+        
+        fields = bond_fields
+
