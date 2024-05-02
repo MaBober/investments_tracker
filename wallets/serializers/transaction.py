@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account, Currency, Deposit, MarketAssetTransaction, MarketAsset, Transaction, TreasuryBondsTransaction
+from wallets.models import Wallet, Account, Currency, Deposit, MarketAssetTransaction, MarketAsset, Transaction, TreasuryBondsTransaction, TreasuryBonds
 
 class TransactionSerializer(serializers.ModelSerializer):
     """
@@ -169,12 +169,20 @@ class TreasuryBondsTransactionCreateSerializer(TransactionCreateSerializer):
     
     This serializer is used to convert JSON data into a TreasuryBondsTransaction model instance.
     """
+    bond = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=TreasuryBonds.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong bond. Please provide a valid bond.'
+        }
+    )
 
     class Meta:
         model = TreasuryBondsTransaction
 
         bond_fields = TransactionCreateSerializer.Meta.fields
-
+        bond_fields.extend(['bond'])
         
         fields = bond_fields
 

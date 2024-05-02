@@ -1,3 +1,6 @@
+import datetime as dt
+from dateutil.relativedelta import relativedelta
+
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
@@ -204,21 +207,33 @@ class UserAsset(models.Model):
 class RetailBonds(models.Model):
     
     name = models.CharField(max_length=100, blank=False, null=False)
-    code = models.CharField(max_length=100, blank=False, null=False)
+    code = models.CharField(max_length=100, blank=False, null=False, unique=True)
 
     description = models.CharField(blank=True, max_length=1000)
-    issuer = models.CharField(max_length=100, blank=False, null=False)
     nominal_value = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+
+    duration = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    duration_unit = models.CharField(max_length=1, choices=[('D', 'Days'), ('M', 'Months'), ('Y', 'Years')], blank=False, null=False)
 
     price_currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     asset_type = models.ForeignKey(AssetType, on_delete=models.PROTECT)
     current_value = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     initial_interest_rate = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
 
-    premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(Decimal('0.0'))])
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def maturity_date_delta(self):
+        if self.duration_unit == 'D':
+            return dt.timedelta(days=self.duration)
+        if self.duration_unit == 'M':
+            return relativedelta(months=self.duration)
+        if self.duration_unit == 'Y':
+            return relativedelta(years=self.duration)
+
 
 
 class TreasuryBonds(RetailBonds):
@@ -234,7 +249,7 @@ class TreasuryBonds(RetailBonds):
 
     def save(self, *args, **kwargs):
 
-        if self.issuer.name not in [country.name for country in Country.objects.all()]:
+        if self.issuer_country.name not in [country.name for country in Country.objects.all()]:
             raise ValidationError('Issuer must be a country issuing government bonds.')
 
         if self.issuer_country == Country.objects.get(name='Poland'):
@@ -247,6 +262,9 @@ class TreasuryBonds(RetailBonds):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.code
+
 
 class UserTreasuryBonds(models.Model):
 
@@ -256,13 +274,15 @@ class UserTreasuryBonds(models.Model):
     wallet = models.ForeignKey(Wallet, related_name='bonds', on_delete=models.CASCADE)
     bond = models.ForeignKey(RetailBonds, related_name='bonds', on_delete=models.CASCADE)
 
-    amount = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    amount = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal('0.0'))])
 
     issue_date = models.DateField()
     maturity_date = models.DateField()
 
     buy_transaction = models.ForeignKey('TreasuryBondsTransaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
     sell_transactions = models.ManyToManyField('TreasuryBondsTransaction', related_name='sell_user_assets', blank=True)
+
+    active = models.BooleanField(default=True, blank=False, null=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

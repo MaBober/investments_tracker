@@ -1,3 +1,5 @@
+import datetime as dt
+
 from django.db import models
 from django.core.exceptions import ValidationError
 
@@ -326,6 +328,74 @@ class Account(BaseModel):
                 user_asset.amount = 0
                 user_asset.sell_transactions.add(transaction)
                 user_asset.save()
+
+        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update.balance += transaction.total_price
+        balance_to_update.save()
+
+    def buy_bond(self, transaction):
+        """
+        Buy a bond with the account
+        """
+
+        from . import UserTreasuryBonds
+
+        if transaction.account != self:
+            raise ValidationError('The transaction must be made with this account.')
+        
+        if transaction.currency not in self.currencies.all():
+            raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
+        
+        if transaction.transaction_type != 'B':
+            raise ValidationError('The type of the transaction must be BUY.')
+        
+        user_bond = UserTreasuryBonds.objects.create(
+            user=transaction.user,
+            account=transaction.account,
+            wallet=transaction.wallet,
+            bond=transaction.bond,
+            amount=transaction.amount,
+            issue_date = transaction.transaction_date,
+            maturity_date = transaction.transaction_date + transaction.bond.maturity_date_delta,
+            buy_transaction=transaction,
+            active=True
+        )
+        user_bond.save()
+
+        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update.balance -= transaction.total_price
+        balance_to_update.save()
+
+    
+    def sell_bonds(self, transaction):
+        """
+        Sell bonds with the account
+        """
+
+        user_bonds = transaction.user.bonds.filter(bond=transaction.bond, account=self, active=True).order_by('created_at')
+
+        for user_bond in user_bonds:
+
+            if user_bond.amount > transaction.amount:
+                user_bond.amount -= transaction.amount
+                user_bond.sell_transactions.add(transaction)
+                user_bond.save()
+
+                break
+            
+            elif user_bond.amount == transaction.amount:
+                user_bond.active = False
+                user_bond.amount = 0
+                user_bond.sell_transactions.add(transaction)
+                user_bond.save()
+                break
+
+            else:
+                transaction.amount -= user_bond.amount
+                user_bond.active = False
+                user_bond.amount = 0
+                user_bond.sell_transactions.add(transaction)
+                user_bond.save()
 
         balance_to_update = self.balances.get(currency=transaction.currency)
         balance_to_update.balance += transaction.total_price

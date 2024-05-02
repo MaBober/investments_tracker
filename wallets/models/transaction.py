@@ -109,10 +109,16 @@ class Transaction(models.Model):
             super().save(*args, **kwargs)
 
             if self.transaction_type == 'S':
-                self.account.sell_assets(self)
+                if hasattr(self, 'asset'):
+                    self.account.sell_assets(self)
+                elif hasattr(self, 'bond'):
+                    self.account.sell_bonds(self)
 
             if self.transaction_type == 'B':
-                self.account.buy_asset(self)
+                if hasattr(self, 'asset'):
+                    self.account.buy_asset(self)
+                elif hasattr(self, 'bond'):
+                    self.account.buy_bond(self)
 
         else:
             raise ValidationError({'transaction_update_unavailable': 'Updating transactions will be added soon.'})
