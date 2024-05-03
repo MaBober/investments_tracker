@@ -1381,6 +1381,5 @@ def check_market_transaction_create_validations(api_client, data, error_field, e
 
     response = api_client.post(api_url('market_transactions/'), data=data)
     
-    print(response.data)
-    # assert response.status_code == 400
-    # assert str(response.data[error_field][0]) == error_message
+    assert response.status_code == 400
+    assert str(response.data[error_field][0]) == error_message
