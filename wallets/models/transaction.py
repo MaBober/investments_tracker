@@ -1,10 +1,14 @@
 from django.db import models
+from django.utils import timezone
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 
 from . import  Account, Wallet, Currency, MarketAsset, TreasuryBonds
 
+def past_or_present_time(value):
+    if value > timezone.now():
+        raise ValidationError('Date cannot be in the future.')
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
@@ -29,7 +33,7 @@ class Transaction(models.Model):
     commission_currency = models.ForeignKey(Currency, related_name='%(class)s_commission', on_delete=models.PROTECT)
     commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
-    transaction_date = models.DateTimeField(null=False, blank=False)
+    transaction_date = models.DateTimeField(validators=[past_or_present_time], null=False, blank=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -81,10 +85,10 @@ class Transaction(models.Model):
         if self.transaction_type == 'S':
             
             if hasattr(self, 'asset'):
-                assets = self.user.assets.filter(asset=self.asset, active=True)
+                assets = self.user.assets.filter(asset=self.asset, active=True, account=self.account)
                 total_amount = assets.aggregate(Sum('amount'))['amount__sum']
             elif hasattr(self, 'bond'):
-                bonds = self.user.bonds.filter(bond=self.bond, active=True)
+                bonds = self.user.bonds.filter(bond=self.bond, active=True, account=self.account)
                 total_amount = bonds.aggregate(Sum('amount'))['amount__sum']
 
             if total_amount is None or total_amount < self.amount:
