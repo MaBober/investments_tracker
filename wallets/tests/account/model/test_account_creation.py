@@ -106,6 +106,12 @@ def test_account_create_multiple_currencies(test_user, test_account_types, test_
     assert account.created_at == account.updated_at
     assert timezone.now() - account.created_at < timezone.timedelta(seconds=1.5)
 
+    assert account.balances.count() == 2
+
+    for balance in account.balances.all():
+        assert balance.currency in account.currencies.all()
+        assert balance.balance == 0
+
 
 @pytest.mark.django_db
 def test_account_create_other_instiution(test_user, test_account_types, test_account_institution_types, test_countries, test_currencies):

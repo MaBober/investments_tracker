@@ -1,6 +1,6 @@
 import pytest
 
-from wallets.models import AssetType, ExchangeMarket, MarketShare
+from wallets.models import AssetType, ExchangeMarket, MarketShare, TreasuryBonds
 from wallets.tests.test_fixture import test_countries, test_currencies
 
 
@@ -13,7 +13,8 @@ def test_asset_types():
         {'name': 'ETF', 'description': 'ETF asset type'},
         {'name': 'Mutual Fund', 'description': 'Mutual Fund asset type'},
         {'name': 'Cryptocurrency', 'description': 'Cryptocurrency asset type'},
-        {'name': 'Other', 'description': 'Other asset type'}
+        {'name': 'Other', 'description': 'Other asset type'},
+        {'name': 'Treasury Bonds', 'description': 'Treasury Bonds asset type'}
     ]
 
     for asset_type in asset_types_data:
@@ -55,3 +56,31 @@ def test_market_shares(test_exchange_marketes, test_currencies, test_asset_types
 
     return market_shares
 
+
+
+@pytest.fixture
+def test_treasury_bonds(test_currencies,  test_countries, test_asset_types):
+
+    treasury_bonds = []
+    treasury_bonds_data = [
+        {'name': 'US Treasury Bonds', 'code': 'US-TB', 'description': 'US Treasury Bonds description', 'price_currency': test_currencies[0], 'issuer_country': test_countries[0], 'duration': 10, 'duration_unit': 'Y', 'initial_interest_rate': 0.5, 'premature_withdrawal_fee': 1, 'nominal_value': 100},
+        {'name': 'UK Treasury Bonds', 'code': 'UK-TB', 'description': 'UK Treasury Bonds description', 'price_currency': test_currencies[1], 'issuer_country': test_countries[1], 'duration': 10, 'duration_unit': 'Y', 'initial_interest_rate': 0.5, 'premature_withdrawal_fee': 1, 'nominal_value': 120},
+        {'name': 'JP Treasury Bonds', 'code': 'JP-TB', 'description': 'JP Treasury Bonds description', 'price_currency': test_currencies[2], 'issuer_country': test_countries[2], 'duration': 10, 'duration_unit': 'Y', 'initial_interest_rate': 0.5, 'premature_withdrawal_fee': 1, 'nominal_value': 120},
+        {'name': 'CN Treasury Bonds', 'code': 'CN-TB', 'description': 'CN Treasury Bonds description', 'price_currency': test_currencies[3], 'issuer_country': test_countries[3], 'duration': 10, 'duration_unit': 'Y', 'initial_interest_rate': 0.5, 'premature_withdrawal_fee': 1, 'nominal_value': 130},
+        {'name': 'DE Treasury Bonds', 'code': 'DE-TB', 'description': 'DE Treasury Bonds description', 'price_currency': test_currencies[4], 'issuer_country': test_countries[4], 'duration': 10, 'duration_unit': 'Y', 'initial_interest_rate': 0.5, 'premature_withdrawal_fee': 1, 'nominal_value': 140},
+    ]
+
+    for treasury_bond in treasury_bonds_data:
+        treasury_bonds.append(TreasuryBonds.objects.create(
+            name=treasury_bond['name'],
+            code=treasury_bond['code'],
+            description=treasury_bond['description'],
+            price_currency=treasury_bond['price_currency'],
+            issuer_country=treasury_bond['issuer_country'],
+            duration=treasury_bond['duration'],
+            duration_unit=treasury_bond['duration_unit'],
+            initial_interest_rate=treasury_bond['initial_interest_rate'],
+            premature_withdrawal_fee=treasury_bond['premature_withdrawal_fee'],
+            nominal_value=treasury_bond['nominal_value']))
+
+    return treasury_bonds
