@@ -75,8 +75,9 @@ class Transaction(models.Model):
 
             return price_in_account_currency - commission
 
-    def __str__(self):
-        return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
+    # def __str__(self):
+
+    #     return f'{self.account.name} - {self.asset.name} - {self.amount} {self.currency.code}'
     
     def clean(self):
 

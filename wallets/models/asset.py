@@ -217,13 +217,20 @@ class RetailBonds(models.Model):
 
     price_currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     asset_type = models.ForeignKey(AssetType, on_delete=models.PROTECT)
-    current_value = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    initial_interest_rate = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    current_value = models.DecimalField(max_digits=20, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))], null=True, blank=True)
+    initial_interest_rate = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))])
 
-    premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(Decimal('0.0'))])
+    premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.0'))])
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pk and self.current_value is None:
+            self.current_value = self.nominal_value
+        elif self.pk and self.current_value is None:  # if the object is being updated and current_value is not set
+            raise ValueError({"current_value":"current_value cannot be empty during an update"})
+        super().save(*args, **kwargs)
 
     @property
     def maturity_date_delta(self):
@@ -233,7 +240,7 @@ class RetailBonds(models.Model):
             return relativedelta(months=self.duration)
         if self.duration_unit == 'Y':
             return relativedelta(years=self.duration)
-
+        
 
 
 class TreasuryBonds(RetailBonds):
@@ -257,9 +264,9 @@ class TreasuryBonds(RetailBonds):
             self.nominal_value = Decimal('100.00')
             self.price_currency = Currency.objects.get(code='PLN')
 
-        self.asset_type = AssetType.objects.get(name='Treasury Bond')
+        self.asset_type = AssetType.objects.get(name='Treasury Bonds')
 
-        self.full_clean()
+        self.clean_fields()
         super().save(*args, **kwargs)
 
     def __str__(self):

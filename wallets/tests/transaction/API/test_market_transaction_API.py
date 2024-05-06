@@ -45,7 +45,7 @@ def test_market_asset_transactions_no_auth(api_client):
 
 
 @pytest.mark.django_db
-def test_market_asset_transactions_no_admiin_auth(authenticated_client):
+def test_market_asset_transactions_no_admin_auth(authenticated_client):
 
     response = authenticated_client.get(api_url('market_transactions/'))
 

@@ -279,8 +279,8 @@ class TreasuryBondsTransactionSerializer(TransactionSerializer):
         model = TreasuryBondsTransaction
 
         bond_fields = TransactionSerializer.Meta.fields.copy()
+        bond_fields.append('bond')
   
-
         fields = bond_fields
 
 class TreasuryBondsTransactionCreateSerializer(TransactionCreateSerializer):
@@ -306,3 +306,26 @@ class TreasuryBondsTransactionCreateSerializer(TransactionCreateSerializer):
         
         fields = bond_fields
 
+    def validate(self, data):
+
+        super().validate(data)
+
+        user = self.context['request'].user
+        bond = data.get('bond')
+        account = data.get('account')
+
+        try:
+            bond = TreasuryBonds.objects.get(code=bond)
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError('Bond does not exist.')
+        
+        if data.get('transaction_type') == 'S':
+        
+            assets = user.bonds.filter(bond=bond, active=True, account=account)
+            total_amount = assets.aggregate(Sum('amount'))['amount__sum']
+
+            if total_amount is None or total_amount < data.get('amount'):
+                raise serializers.ValidationError({"amount":'You do not have enough bonds to sell.'})
+
+
+        return data
