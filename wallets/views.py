@@ -1,9 +1,12 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldError
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
@@ -275,3 +278,110 @@ class TreasuryBondsTransactionViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST' or self.request.method == 'PUT':
             return TreasuryBondsTransactionCreateSerializer
         return TreasuryBondsTransactionSerializer
+    
+
+class ObjectTransactionsList(ListAPIView):
+
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        
+        if 'account_id' in self.kwargs:
+            account_id = self.kwargs['account_id']
+            queryset = self.object_class.objects.filter(account=account_id)
+            
+            try:
+                account = Account.objects.get(id=self.kwargs['account_id'])
+            except Account.DoesNotExist:
+                raise Http404({'account':'Account does not exist.'})
+            
+            if self.request.user != account.owner and self.request.user not in account.co_owners.all():
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        elif 'wallet_id' in self.kwargs:
+            wallet_id = self.kwargs['wallet_id']
+            queryset = self.object_class.objects.filter(wallet=wallet_id)
+            
+            try:
+                wallet = Wallet.objects.get(id=self.kwargs['wallet_id'])
+            except Wallet.DoesNotExist:
+                raise Http404({'wallet':'Wallet does not exist.'})
+            
+            if self.request.user != wallet.owner and self.request.user not in wallet.co_owners.all():
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        elif 'user_id' in self.kwargs:
+            user_id = self.kwargs['user_id']
+            queryset = self.object_class.objects.filter(user=user_id)
+            
+            try:
+                user = User.objects.get(id=self.kwargs['user_id'])
+            except User.DoesNotExist:
+                raise Http404({'user':'User does not exist.'})
+            
+            if self.request.user != user:
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        return queryset
+
+
+class ObjectTreasuryBondsTransactionsList(ObjectTransactionsList):
+
+    serializer_class = TreasuryBondsTransactionSerializer
+    object_class = TreasuryBondsTransaction
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        
+        params = self.request.query_params # This will return a list of tuples with the query parameters and their values
+        queryset = super().get_queryset()
+        
+        for param in params:
+            
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                elif param == 'after':
+                    queryset = queryset.filter(transaction_date__gte=params[param])
+                    continue
+                elif param == 'before':
+                    queryset = queryset.filter(transaction_date__lte=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+        
+        return queryset    
+
+class ObjectMarketTransactionsList(ObjectTransactionsList):
+
+    serializer_class = MarketAssetTransactionSerializer
+    object_class = MarketAssetTransaction
+    permission_classes = [IsAuthenticated]
+   
+    def get_queryset(self):
+
+        params = self.request.query_params # This will return a list of tuples with the query parameters and their values
+        queryset = super().get_queryset()
+        
+        for param in params:
+
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                elif param == 'after':
+                    queryset = queryset.filter(transaction_date__gte=params[param])
+                    continue
+                elif param == 'before':
+                    queryset = queryset.filter(transaction_date__lte=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        return queryset
+

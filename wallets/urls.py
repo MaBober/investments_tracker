@@ -85,7 +85,14 @@ urlpatterns = [
     path('withdrawals/', withdrawal_list, name='withdrawal-list'),
     path('withdrawals/<int:pk>/', withdrawal_detail, name='withdrawal-detail'),
     path('users/', views.UserList.as_view(), name='user-list'),
-    path('users/<int:pk>/', views.UserDetail.as_view())
+    path('users/<int:pk>/', views.UserDetail.as_view()),
+    path('accounts/<int:account_id>/transactions/', views.ObjectMarketTransactionsList.as_view(), name='account-transactions'),
+    path('accounts/<int:account_id>/treasury_bond_transactions/', views.ObjectTreasuryBondsTransactionsList.as_view(), name='account-treasury-bond-transactions'),
+    path('wallets/<int:wallet_id>/transactions/', views.ObjectMarketTransactionsList.as_view(), name='wallet-transactions'),
+    path('wallets/<int:wallet_id>/treasury_bond_transactions/', views.ObjectTreasuryBondsTransactionsList.as_view(), name='wallet-treasury-bond-transactions'),
+    path('users/<int:user_id>/transactions/', views.ObjectMarketTransactionsList.as_view(), name='user-transactions'),
+    path('users/<int:user_id>/treasury_bond_transactions/', views.ObjectTreasuryBondsTransactionsList.as_view(), name='user-treasury-bond-transactions'),
+    
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
