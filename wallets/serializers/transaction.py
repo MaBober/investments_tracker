@@ -20,6 +20,25 @@ class TransactionSerializer(serializers.ModelSerializer):
     """
 
     account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
+    
+
+    currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
+
+    commission_currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
 
     class Meta:
        # model = Transaction
@@ -107,9 +126,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         if value not in account.currencies.all():
             raise serializers.ValidationError('This currency is not supported by this account.')
         
-        return value
-        
-    
+        return value   
 
     
     def validate(self, data):
@@ -199,6 +216,15 @@ class MarketAssetTransactionSerializer(TransactionSerializer):
     included in the serialized output.
     """
 
+    asset = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=MarketAsset.objects.all(),
+        required=False,
+        error_messages={
+            'does_not_exist': '{value} is a wrong asset. Please provide a valid asset.'
+        }
+    )
+
     class Meta:
         model = MarketAssetTransaction
         market_asset_fields = TransactionSerializer.Meta.fields.copy()
@@ -274,6 +300,25 @@ class TreasuryBondsTransactionSerializer(TransactionSerializer):
     representations and vice versa. It specifies the fields that should be
     included in the serialized output.
     """
+
+    
+    currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
+
+    commission_currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
 
     class Meta:
         model = TreasuryBondsTransaction
