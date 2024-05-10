@@ -12,16 +12,37 @@ from wallets.tests.transaction.test_fixture import test_market_asset_transaction
 from wallets.models import Deposit, MarketAssetTransaction, TreasuryBondsTransaction
 
 @pytest.mark.django_db
-def test_account_transaction_list_owner_empty_list(api_client, test_accounts, test_user):
+def test_wallet_transaction_list_owner_empty_list(api_client, test_wallets, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    account.owner = user
-    account.save()
+    wallet = test_wallets[0]
+    wallet.owner = user
+    wallet.save()
 
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/'))
+
+    assert response.status_code == 200
+    assert response.data['count'] == 0
+    assert response.data['results'] == []
+
+
+
+@pytest.mark.django_db
+def test_wallet_transaction_list_co_owner_empty_list(api_client, test_wallets, test_user):
+
+    user = test_user[0]
+    wallet = test_wallets[0]
+
+    wallet.owner = test_user[1]
+    wallet.co_owners.clear()
+    wallet.co_owners.add(user)
+    wallet.save()
+
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/'))
 
     assert response.status_code == 200
     assert response.data['count'] == 0
@@ -29,60 +50,40 @@ def test_account_transaction_list_owner_empty_list(api_client, test_accounts, te
 
 
 @pytest.mark.django_db
-def test_account_transaction_list_co_owner_empty_list(api_client, test_accounts, test_user):
+def test_wallet_transaction_list_not_owner_nor_co_owner_empty_list(api_client, test_wallets, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
+    wallet = test_wallets[0]
 
-    account.owner = test_user[1]
-    account.co_owners.clear()
-    account.co_owners.add(user)
-    account.save()
+    wallet.owner = test_user[1]
+    wallet.co_owners.clear()
+    wallet.save()
 
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/'))
-
-    assert response.status_code == 200
-    assert response.data['count'] == 0
-    assert response.data['results'] == []
-
-
-@pytest.mark.django_db
-def test_account_transaction_list_not_owner_nor_co_owner_empty_list(api_client, test_accounts, test_user):
-
-    user = test_user[0]
-    account = test_accounts[0]
-
-    account.owner = test_user[1]
-    account.co_owners.clear()
-    account.save()
-
-    api_client.force_authenticate(user=user)
-
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/'))
 
     assert response.status_code == 403
 
 
 @pytest.mark.django_db
-def test_account_transaction_list_owner_list(api_client, test_market_shares, test_wallets, test_accounts, test_currencies, test_user):
+def test_wallet_transaction_list_owner_list(api_client, test_market_shares, test_wallets, test_accounts, test_currencies, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    test_accounts[0].owner = user
-    test_accounts[0].save()
+    wallet = test_wallets[0]
+    test_wallets[0].owner = user
+    test_wallets[0].save()
 
     api_client.force_authenticate(user=user)
 
-    #make deposit to account
+    #make deposit to wallet
 
     deposit = Deposit.objects.create(
         user=user,
-        account=account,
-        wallet=account.wallets.first(),
+        wallet=wallet,
+        account=wallet.accounts.first(),
         amount=1000000,
-        currency=account.currencies.first(),
+        currency=wallet.accounts.first().currencies.first(),
         deposited_at=timezone.now()
     )
 
@@ -112,7 +113,7 @@ def test_account_transaction_list_owner_list(api_client, test_market_shares, tes
 
     transaction = MarketAssetTransaction.objects.create(**transaction_data)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/'))
 
     assert response.status_code == 200
     assert response.data['count'] == 2
@@ -134,15 +135,13 @@ def test_account_transaction_list_owner_list(api_client, test_market_shares, tes
 
 ##TODO: Make test for GET with parameters
 
-
-
 @pytest.mark.django_db
-def test_account_transaction_list_owner_list_with_parameters(api_client, test_market_shares, test_wallets, test_accounts, test_currencies, test_user):
+def test_wallet_transaction_list_owner_list_with_parameters(api_client, test_market_shares, test_wallets, test_accounts, test_currencies, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    test_accounts[0].owner = user
-    test_accounts[0].save()
+    wallet = test_wallets[0]
+    test_wallets[0].owner = user
+    test_wallets[0].save()
 
     api_client.force_authenticate(user=user)
 
@@ -150,10 +149,10 @@ def test_account_transaction_list_owner_list_with_parameters(api_client, test_ma
 
     deposit = Deposit.objects.create(
         user=user,
-        account=account,
-        wallet=account.wallets.first(),
+        wallet=wallet,
+        account=wallet.accounts.first(),
         amount=1000000,
-        currency=account.currencies.first(),
+        currency=wallet.accounts.first().currencies.first(),
         deposited_at=timezone.now()
     )
 
@@ -183,7 +182,7 @@ def test_account_transaction_list_owner_list_with_parameters(api_client, test_ma
 
     transaction = MarketAssetTransaction.objects.create(**transaction_data)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/?transaction_type=B'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/?transaction_type=B'))
 
     assert response.status_code == 200
     assert response.data['count'] == 2
@@ -195,7 +194,7 @@ def test_account_transaction_list_owner_list_with_parameters(api_client, test_ma
     assert response.data['results'][1]['transaction_type'] == 'B'
     assert response.data['results'][0]['currency'] == test_currencies[0].code
 
-    response = api_client.get(api_url(f'accounts/{account.id}/transactions/?transaction_type=S'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/transactions/?transaction_type=S'))
 
     assert response.status_code == 200
     assert response.data['count'] == 0
@@ -203,17 +202,18 @@ def test_account_transaction_list_owner_list_with_parameters(api_client, test_ma
 
 
 
+
 @pytest.mark.django_db
-def test_account_treasury_bond_transaction_list_owner_empty_list(api_client, test_accounts, test_user):
+def test_wallet_treasury_bond_transaction_list_owner_empty_list(api_client, test_wallets, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    account.owner = user
-    account.save()
+    wallet = test_wallets[0]
+    wallet.owner = user
+    wallet.save()
 
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/treasury_bond_transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/treasury_bond_transactions/'))
 
     assert response.status_code == 200
     assert response.data['count'] == 0
@@ -221,19 +221,19 @@ def test_account_treasury_bond_transaction_list_owner_empty_list(api_client, tes
 
 
 @pytest.mark.django_db
-def test_account_treasury_bond_transaction_list_co_owner_empty_list(api_client, test_accounts, test_user):
+def test_wallet_treasury_bond_transaction_list_co_owner_empty_list(api_client, test_wallets, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
+    wallet = test_wallets[0]
 
-    account.owner = test_user[1]
-    account.co_owners.clear()
-    account.co_owners.add(user)
-    account.save()
+    wallet.owner = test_user[1]
+    wallet.co_owners.clear()
+    wallet.co_owners.add(user)
+    wallet.save()
 
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/treasury_bond_transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/treasury_bond_transactions/'))
 
     assert response.status_code == 200
     assert response.data['count'] == 0
@@ -241,40 +241,40 @@ def test_account_treasury_bond_transaction_list_co_owner_empty_list(api_client, 
 
 
 @pytest.mark.django_db
-def test_account_treasury_bond_transaction_list_not_owner_nor_co_owner_empty_list(api_client, test_accounts, test_user):
+def test_wallet_treasury_bond_transaction_list_not_owner_nor_co_owner_empty_list(api_client, test_wallets, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
+    wallet = test_wallets[0]
 
-    account.owner = test_user[1]
-    account.co_owners.clear()
-    account.save()
+    wallet.owner = test_user[1]
+    wallet.co_owners.clear()
+    wallet.save()
 
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/treasury_bond_transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/treasury_bond_transactions/'))
 
     assert response.status_code == 403
 
 
 @pytest.mark.django_db
-def test_account_treasury_bond_transaction_list_owner_list(api_client, test_treasury_bonds, test_wallets, test_accounts, test_currencies, test_user):
+def test_wallet_treasury_bond_transaction_list_owner_list(api_client, test_treasury_bonds, test_wallets, test_accounts, test_currencies, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    test_accounts[0].owner = user
-    test_accounts[0].save()
+    wallet = test_wallets[0]
+    test_wallets[0].owner = user
+    test_wallets[0].save()
 
     api_client.force_authenticate(user=user)
 
-    #make deposit to account
+    #make deposit to wallet
 
     deposit = Deposit.objects.create(
         user=user,
-        account=account,
-        wallet=account.wallets.first(),
+        account=wallet.accounts.first(),
+        wallet=wallet,
         amount=1000000,
-        currency=account.currencies.first(),
+        currency=wallet.accounts.first().currencies.first(),
         deposited_at=timezone.now()
     )
 
@@ -303,7 +303,7 @@ def test_account_treasury_bond_transaction_list_owner_list(api_client, test_trea
 
     transaction = TreasuryBondsTransaction.objects.create(**transaction_data)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/treasury_bond_transactions/'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/treasury_bond_transactions/'))
 
     assert response.status_code == 200
     assert response.data['count'] == 2
@@ -324,23 +324,23 @@ def test_account_treasury_bond_transaction_list_owner_list(api_client, test_trea
 
 
 @pytest.mark.django_db
-def test_account_treasury_bond_transaction_lis_with_parameters(api_client, test_treasury_bonds, test_wallets, test_accounts, test_currencies, test_user):
+def test_wallet_treasury_bond_transaction_lis_with_parameters(api_client, test_treasury_bonds, test_wallets, test_accounts, test_currencies, test_user):
 
     user = test_user[0]
-    account = test_accounts[0]
-    test_accounts[0].owner = user
-    test_accounts[0].save()
+    wallet = test_wallets[0]
+    test_wallets[0].owner = user
+    test_wallets[0].save()
 
     api_client.force_authenticate(user=user)
 
-    #make deposit to account
+    #make deposit to wallet
 
     deposit = Deposit.objects.create(
         user=user,
-        account=account,
-        wallet=account.wallets.first(),
+        account=wallet.accounts.first(),
+        wallet=wallet,
         amount=1000000,
-        currency=account.currencies.first(),
+        currency=wallet.accounts.first().currencies.first(),
         deposited_at=timezone.now()
     )
 
@@ -369,7 +369,7 @@ def test_account_treasury_bond_transaction_lis_with_parameters(api_client, test_
 
     transaction = TreasuryBondsTransaction.objects.create(**transaction_data)
 
-    response = api_client.get(api_url(f'accounts/{account.id}/treasury_bond_transactions/?transaction_type=B?currency={test_currencies[0].code}'))
+    response = api_client.get(api_url(f'wallets/{wallet.id}/treasury_bond_transactions/?transaction_type=B?currency={test_currencies[0].code}'))
 
     assert response.status_code == 200
     assert response.data['count'] == 2

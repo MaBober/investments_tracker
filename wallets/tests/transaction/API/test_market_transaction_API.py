@@ -22,7 +22,7 @@ def test_market_asset_transactions_list(admin_logged_client, test_market_asset_t
     assert response.data['count'] == len(test_market_asset_transactions)
 
     assert response.data['results'][0]['id'] == test_market_asset_transactions[0].id
-    assert response.data['results'][0]['asset'] == test_market_asset_transactions[0].asset.id
+    assert response.data['results'][0]['asset'] == test_market_asset_transactions[0].asset.code
     assert response.data['results'][0]['wallet_id'] == test_market_asset_transactions[0].wallet.id
     assert response.data['results'][0]['account_id'] == test_market_asset_transactions[0].account.id
     assert response.data['results'][0]['user_id'] == test_market_asset_transactions[0].user.id
@@ -64,7 +64,7 @@ def test_market_asset_transaction_owner(api_client, test_market_asset_transactio
     assert response.status_code == 200
 
     assert response.data['id'] == test_market_asset_transactions[0].id
-    assert response.data['asset'] == test_market_asset_transactions[0].asset.id
+    assert response.data['asset'] == test_market_asset_transactions[0].asset.code
     assert response.data['wallet_id'] == test_market_asset_transactions[0].wallet.id
     assert response.data['account_id'] == test_market_asset_transactions[0].account.id
     assert response.data['user_id'] == test_market_asset_transactions[0].user.id

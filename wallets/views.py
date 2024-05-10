@@ -333,7 +333,7 @@ class ObjectTreasuryBondsTransactionsList(ObjectTransactionsList):
     
     def get_queryset(self):
         
-        params = self.request.query_params # This will return a list of tuples with the query parameters and their values
+        params = self.request.query_params
         queryset = super().get_queryset()
         
         for param in params:
@@ -363,7 +363,7 @@ class ObjectMarketTransactionsList(ObjectTransactionsList):
    
     def get_queryset(self):
 
-        params = self.request.query_params # This will return a list of tuples with the query parameters and their values
+        params = self.request.query_params
         queryset = super().get_queryset()
         
         for param in params:
