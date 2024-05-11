@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.core.exceptions import ValidationError, FieldError
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -10,8 +11,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
-from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal
+from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal, UserAsset, UserTreasuryBonds
 from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
+from .serializers import UserDetailedAssetSerializer, UserSimpleAssetSerializer, UserDetailedTreasuryBondsSerializer, UserSimpleTreasuryBondsSerializer
 
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
@@ -280,7 +282,7 @@ class TreasuryBondsTransactionViewSet(viewsets.ModelViewSet):
         return TreasuryBondsTransactionSerializer
     
 
-class ObjectTransactionsList(ListAPIView):
+class ObjectDependeciesList(ListAPIView):
 
     permission_classes = [IsAuthenticated]
     
@@ -325,11 +327,10 @@ class ObjectTransactionsList(ListAPIView):
         return queryset
 
 
-class ObjectTreasuryBondsTransactionsList(ObjectTransactionsList):
+class ObjectTreasuryBondsTransactionsList(ObjectDependeciesList):
 
     serializer_class = TreasuryBondsTransactionSerializer
     object_class = TreasuryBondsTransaction
-    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         
@@ -355,11 +356,10 @@ class ObjectTreasuryBondsTransactionsList(ObjectTransactionsList):
         
         return queryset    
 
-class ObjectMarketTransactionsList(ObjectTransactionsList):
+class ObjectMarketTransactionsList(ObjectDependeciesList):
 
     serializer_class = MarketAssetTransactionSerializer
     object_class = MarketAssetTransaction
-    permission_classes = [IsAuthenticated]
    
     def get_queryset(self):
 
@@ -384,4 +384,79 @@ class ObjectMarketTransactionsList(ObjectTransactionsList):
                 pass
 
         return queryset
+    
+
+class ObjectUserAssetsList(ObjectDependeciesList):
+
+    serializer_class = UserDetailedAssetSerializer
+    object_class = UserAsset
+
+    def get_serializer_class(self):
+    
+        if "detailed" in self.request.query_params:
+            return UserDetailedAssetSerializer
+        else:
+            return UserSimpleAssetSerializer
+    
+    def get_queryset(self):
+
+        params = self.request.query_params
+        queryset = super().get_queryset()
+
+        if "all" not in params:
+            queryset = queryset.filter(active=True)
+        
+        for param in params:
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        if 'detailed' not in params:
+            queryset = queryset.values('asset').annotate(amount=Sum('amount'))
+        
+
+
+        return queryset
+    
+class ObjectUserTreasuryBondsList(ObjectDependeciesList):
+
+
+    serializer_class = UserDetailedTreasuryBondsSerializer
+    object_class = UserTreasuryBonds
+
+    def get_serializer_class(self):
+    
+        if "detailed" in self.request.query_params:
+            return UserDetailedTreasuryBondsSerializer
+        else:
+            return UserSimpleTreasuryBondsSerializer
+    
+    def get_queryset(self):
+
+        params = self.request.query_params
+        queryset = super().get_queryset()
+
+        if "all" not in params:
+            queryset = queryset.filter(active=True)
+        
+        for param in params:
+            try:
+                queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        if 'detailed' not in params:
+            queryset = queryset.values('bond').annotate(amount=Sum('amount'))
+        
+        return queryset
+
+
+
+
+
 
