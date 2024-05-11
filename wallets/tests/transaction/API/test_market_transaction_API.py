@@ -22,16 +22,16 @@ def test_market_asset_transactions_list(admin_logged_client, test_market_asset_t
     assert response.data['count'] == len(test_market_asset_transactions)
 
     assert response.data['results'][0]['id'] == test_market_asset_transactions[0].id
-    assert response.data['results'][0]['asset'] == test_market_asset_transactions[0].asset.id
+    assert response.data['results'][0]['asset'] == test_market_asset_transactions[0].asset.code
     assert response.data['results'][0]['wallet_id'] == test_market_asset_transactions[0].wallet.id
     assert response.data['results'][0]['account_id'] == test_market_asset_transactions[0].account.id
     assert response.data['results'][0]['user_id'] == test_market_asset_transactions[0].user.id
     assert response.data['results'][0]['amount'] == "{:.2f}".format(test_market_asset_transactions[0].amount)
-    assert response.data['results'][0]['currency'] == test_market_asset_transactions[0].currency.id
+    assert response.data['results'][0]['currency'] == test_market_asset_transactions[0].currency.code
     assert response.data['results'][0]['transaction_type'] == test_market_asset_transactions[0].transaction_type
     assert response.data['results'][0]['price'] == "{:.2f}".format(test_market_asset_transactions[0].price)
     assert response.data['results'][0]['commission'] == "{:.2f}".format(test_market_asset_transactions[0].commission)
-    assert response.data['results'][0]['commission_currency'] == test_market_asset_transactions[0].commission_currency.id
+    assert response.data['results'][0]['commission_currency'] == test_market_asset_transactions[0].commission_currency.code
     assert response.data['results'][0]['transaction_date'] == test_market_asset_transactions[0].transaction_date.astimezone(timezone.get_current_timezone()).isoformat()
 
 
@@ -64,16 +64,16 @@ def test_market_asset_transaction_owner(api_client, test_market_asset_transactio
     assert response.status_code == 200
 
     assert response.data['id'] == test_market_asset_transactions[0].id
-    assert response.data['asset'] == test_market_asset_transactions[0].asset.id
+    assert response.data['asset'] == test_market_asset_transactions[0].asset.code
     assert response.data['wallet_id'] == test_market_asset_transactions[0].wallet.id
     assert response.data['account_id'] == test_market_asset_transactions[0].account.id
     assert response.data['user_id'] == test_market_asset_transactions[0].user.id
     assert response.data['amount'] == "{:.2f}".format(test_market_asset_transactions[0].amount)
-    assert response.data['currency'] == test_market_asset_transactions[0].currency.id
+    assert response.data['currency'] == test_market_asset_transactions[0].currency.code
     assert response.data['transaction_type'] == test_market_asset_transactions[0].transaction_type
     assert response.data['price'] == "{:.2f}".format(test_market_asset_transactions[0].price)
     assert response.data['commission'] == "{:.2f}".format(test_market_asset_transactions[0].commission)
-    assert response.data['commission_currency'] == test_market_asset_transactions[0].commission_currency.id
+    assert response.data['commission_currency'] == test_market_asset_transactions[0].commission_currency.code
     assert response.data['transaction_date'] == test_market_asset_transactions[0].transaction_date.astimezone(timezone.get_current_timezone()).isoformat()
 
 

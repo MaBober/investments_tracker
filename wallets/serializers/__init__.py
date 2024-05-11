@@ -5,3 +5,4 @@ from .account import AccountSerializer, AccountCreateSerializer
 from .deposit import DepositSerializer, DepositCreateSerializer
 from .transaction import TransactionSerializer, TransactionCreateSerializer, MarketAssetTransactionSerializer, MarketAssetTransactionCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
 from .withdrawal import WithdrawalSerializer, WithdrawalCreateSerializer
+from .assets import UserDetailedAssetSerializer, UserSimpleAssetSerializer, UserDetailedTreasuryBondsSerializer, UserSimpleTreasuryBondsSerializer

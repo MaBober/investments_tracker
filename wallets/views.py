@@ -1,14 +1,19 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.db.models import Sum
+from django.core.exceptions import ValidationError, FieldError
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
-from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal
+from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal, UserAsset, UserTreasuryBonds
 from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
+from .serializers import UserDetailedAssetSerializer, UserSimpleAssetSerializer, UserDetailedTreasuryBondsSerializer, UserSimpleTreasuryBondsSerializer
 
 from .permissions import IsOwnerOrCoOwner, IsOwner
     
@@ -275,3 +280,183 @@ class TreasuryBondsTransactionViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST' or self.request.method == 'PUT':
             return TreasuryBondsTransactionCreateSerializer
         return TreasuryBondsTransactionSerializer
+    
+
+class ObjectDependeciesList(ListAPIView):
+
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        
+        if 'account_id' in self.kwargs:
+            account_id = self.kwargs['account_id']
+            queryset = self.object_class.objects.filter(account=account_id)
+            
+            try:
+                account = Account.objects.get(id=self.kwargs['account_id'])
+            except Account.DoesNotExist:
+                raise Http404({'account':'Account does not exist.'})
+            
+            if self.request.user != account.owner and self.request.user not in account.co_owners.all():
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        elif 'wallet_id' in self.kwargs:
+            wallet_id = self.kwargs['wallet_id']
+            queryset = self.object_class.objects.filter(wallet=wallet_id)
+            
+            try:
+                wallet = Wallet.objects.get(id=self.kwargs['wallet_id'])
+            except Wallet.DoesNotExist:
+                raise Http404({'wallet':'Wallet does not exist.'})
+            
+            if self.request.user != wallet.owner and self.request.user not in wallet.co_owners.all():
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        elif 'user_id' in self.kwargs:
+            user_id = self.kwargs['user_id']
+            queryset = self.object_class.objects.filter(user=user_id)
+            
+            try:
+                user = User.objects.get(id=self.kwargs['user_id'])
+            except User.DoesNotExist:
+                raise Http404({'user':'User does not exist.'})
+            
+            if self.request.user != user:
+                raise PermissionDenied('You do not have permission to view these transactions.')
+            
+        return queryset
+
+
+class ObjectTreasuryBondsTransactionsList(ObjectDependeciesList):
+
+    serializer_class = TreasuryBondsTransactionSerializer
+    object_class = TreasuryBondsTransaction
+    
+    def get_queryset(self):
+        
+        params = self.request.query_params
+        queryset = super().get_queryset()
+        
+        for param in params:
+            
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                elif param == 'after':
+                    queryset = queryset.filter(transaction_date__gte=params[param])
+                    continue
+                elif param == 'before':
+                    queryset = queryset.filter(transaction_date__lte=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+        
+        return queryset    
+
+class ObjectMarketTransactionsList(ObjectDependeciesList):
+
+    serializer_class = MarketAssetTransactionSerializer
+    object_class = MarketAssetTransaction
+   
+    def get_queryset(self):
+
+        params = self.request.query_params
+        queryset = super().get_queryset()
+        
+        for param in params:
+
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                elif param == 'after':
+                    queryset = queryset.filter(transaction_date__gte=params[param])
+                    continue
+                elif param == 'before':
+                    queryset = queryset.filter(transaction_date__lte=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        return queryset
+    
+
+class ObjectUserAssetsList(ObjectDependeciesList):
+
+    serializer_class = UserDetailedAssetSerializer
+    object_class = UserAsset
+
+    def get_serializer_class(self):
+    
+        if "detailed" in self.request.query_params:
+            return UserDetailedAssetSerializer
+        else:
+            return UserSimpleAssetSerializer
+    
+    def get_queryset(self):
+
+        params = self.request.query_params
+        queryset = super().get_queryset()
+
+        if "all" not in params:
+            queryset = queryset.filter(active=True)
+        
+        for param in params:
+            try:
+                if param == 'currency' or param == 'commission_currency':
+                    queryset = queryset.filter(currency__code=params[param])
+                    continue
+                else:
+                    queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        if 'detailed' not in params:
+            queryset = queryset.values('asset').annotate(amount=Sum('amount'))
+        
+
+
+        return queryset
+    
+class ObjectUserTreasuryBondsList(ObjectDependeciesList):
+
+
+    serializer_class = UserDetailedTreasuryBondsSerializer
+    object_class = UserTreasuryBonds
+
+    def get_serializer_class(self):
+    
+        if "detailed" in self.request.query_params:
+            return UserDetailedTreasuryBondsSerializer
+        else:
+            return UserSimpleTreasuryBondsSerializer
+    
+    def get_queryset(self):
+
+        params = self.request.query_params
+        queryset = super().get_queryset()
+
+        if "all" not in params:
+            queryset = queryset.filter(active=True)
+        
+        for param in params:
+            try:
+                queryset = queryset.filter(**{param: params[param]})
+            except FieldError:
+                pass
+
+        if 'detailed' not in params:
+            queryset = queryset.values('bond').annotate(amount=Sum('amount'))
+        
+        return queryset
+
+
+
+
+
+
