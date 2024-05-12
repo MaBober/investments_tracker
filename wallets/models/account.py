@@ -151,6 +151,15 @@ class Account(BaseModel):
             return balance.balance
         else:
             return 0
+        
+    def get_current_value(self):
+        """
+        Get the current value of the account
+        """
+
+        active_assets = self.assets.all().filter(active=True)
+
+        print(active_assets)
             
     def add_deposit(self, deposit):
         """
@@ -259,7 +268,7 @@ class Account(BaseModel):
         current_balance = total_deposits - total_withdrawals - total_buys + total_sells
 
         if current_balance != self.get_balance(currency):
-            raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.current_balance} but should be {current_balance}.')
+            raise ValidationError(f'The current balance of the account is incorrect. The current balance is {self.get_balance(currency)} but should be {current_balance}.')
         
         else:
             return True

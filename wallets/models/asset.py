@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
-from . import Currency, Country, Account, Wallet
+from . import Currency, Country, Account, Wallet, CurrencyPrice
 
 def past_or_present_date(value):
     if value > timezone.now().date():
@@ -202,6 +202,43 @@ class UserAsset(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def total_price(self):
+
+        price_in_asset_currency = self.amount * self.price
+
+        if self.currency not in self.account.currencies.all():
+            price_in_account_currency = price_in_asset_currency * self.currency_price
+        else:
+            price_in_account_currency = price_in_asset_currency
+
+        if self.commission_currency in self.account.currencies.all():
+            commission = self.commission
+        else:
+            commission = self.commission * self.commission_currency_price
+
+        return price_in_account_currency + commission
+    
+    @property
+    def current_value(self):
+
+        try:
+            recent_price = self.asset.prices.latest('date').price
+        except AssetPrice.DoesNotExist:
+            recent_price = self.price
+
+        if self.currency in self.account.currencies.all():
+            return self.amount * recent_price
+        
+        else:
+            try:
+                recent_currency_price = self.currency.prices.latest('date').price
+            except CurrencyPrice.DoesNotExist:
+                recent_currency_price = self.currency_price
+            
+            return self.amount * recent_price * recent_currency_price
+
             
 
 class RetailBonds(models.Model):
