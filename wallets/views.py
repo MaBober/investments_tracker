@@ -455,6 +455,17 @@ class ObjectUserTreasuryBondsList(ObjectDependeciesList):
         
         return queryset
 
+from django.http import HttpResponse
+
+def AccountTest(account_id):
+
+    account = Account.objects.get(id=1)
+    for asset in account.assets.filter(active=True):
+        
+        print(asset.total_price, asset.current_value)
+
+    print(account)
+    return HttpResponse('Hello, World!')
 
 
 
