@@ -4,7 +4,7 @@ from .models import Country, Currency
 from .models import Wallet, MarketAssetTransaction, Deposit, Withdrawal, TreasuryBondsTransaction
 from .models import Account, AccountInstitutionType, AccountInstitution, AccountType
 from .models import AssetType, MarketAsset, MarketShare, MarketETF, AssetPrice, ExchangeMarket, AssetTypeAssociation
-from .models import Deposit, UserAsset
+from .models import Deposit, UserAsset, UserTreasuryBonds
 from .models import TreasuryBonds
 
 # Register your models here.
@@ -14,7 +14,7 @@ admin.site.register([Wallet])
 admin.site.register([Account, AccountInstitution, AccountInstitutionType, AccountType, ExchangeMarket])
 admin.site.register([AssetType , MarketShare, MarketETF, AssetPrice, AssetTypeAssociation])
 admin.site.register([Deposit])
-admin.site.register([Withdrawal, UserAsset])
+admin.site.register([Withdrawal, UserAsset, UserTreasuryBonds])
 admin.site.register([TreasuryBonds])
 admin.site.register([TreasuryBondsTransaction])
 
