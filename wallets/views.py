@@ -340,7 +340,7 @@ class ObjectTreasuryBondsTransactionsList(ObjectDependeciesList):
         for param in params:
             
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 elif param == 'after':
@@ -369,7 +369,7 @@ class ObjectMarketTransactionsList(ObjectDependeciesList):
         for param in params:
 
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 elif param == 'after':
@@ -408,7 +408,7 @@ class ObjectUserAssetsList(ObjectDependeciesList):
         
         for param in params:
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 else:
@@ -460,10 +460,13 @@ from django.http import HttpResponse
 def AccountTest(account_id):
 
     account = Account.objects.get(id=1)
+    suma = 0
     for asset in account.assets.filter(active=True):
         
         print(asset.total_price, asset.current_value)
+        suma = suma + asset.current_value
 
+    print(suma) 
     print(account)
     return HttpResponse('Hello, World!')
 

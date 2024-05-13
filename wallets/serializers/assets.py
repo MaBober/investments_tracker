@@ -20,15 +20,6 @@ class UserDetailedAssetSerializer(serializers.ModelSerializer):
         }
     )
 
-    commission_currency = serializers.SlugRelatedField(
-        slug_field='code',
-        queryset=Currency.objects.all(),
-        required=True,
-        error_messages={
-            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
-        }
-    )
-
     asset = serializers.SlugRelatedField(
         slug_field='code',
         queryset=MarketAsset.objects.all(),

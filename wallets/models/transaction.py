@@ -26,12 +26,10 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=False, null=False)
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=False, null=False)
 
-    currency = models.ForeignKey(Currency, related_name='%(class)s', on_delete=models.PROTECT)
+    account_currency = models.ForeignKey(Currency, related_name='%(class)s', on_delete=models.PROTECT)
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    commission_currency = models.ForeignKey(Currency, related_name='%(class)s_commission', on_delete=models.PROTECT)
-    commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     transaction_date = models.DateTimeField(validators=[past_or_present_time], null=False, blank=False)
 
@@ -47,15 +45,12 @@ class Transaction(models.Model):
 
             price_in_asset_currency = self.amount * self.price
 
-            if self.currency not in self.account.currencies.all():
+            if self.asset.price_currency != self.account_currency:
                 price_in_account_currency = price_in_asset_currency * self.currency_price
             else:
                 price_in_account_currency = price_in_asset_currency
 
-            if self.commission_currency in self.account.currencies.all():
-                commission = self.commission
-            else:
-                commission = self.commission * self.commission_currency_price
+            commission = self.commission
 
             return price_in_account_currency + commission
         
@@ -63,15 +58,14 @@ class Transaction(models.Model):
 
             price_in_asset_currency = self.amount * self.price
 
-            if self.currency not in self.account.currencies.all():
+            if self.account_currency not in self.account.currencies.all():
                 price_in_account_currency = price_in_asset_currency * self.currency_price
             else:
                 price_in_account_currency = price_in_asset_currency
 
-            if self.commission_currency in self.account.currencies.all():
-                commission = self.commission
-            else:
-                commission = self.commission * self.commission_currency_price
+
+            commission = self.commission
+
 
             return price_in_account_currency - commission
 
@@ -101,7 +95,7 @@ class Transaction(models.Model):
             if self.account not in self.wallet.accounts.all():
                 raise ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a transaction.'})
             
-            if self.total_price > self.account.get_balance(self.currency):
+            if self.total_price > self.account.get_balance(self.account_currency):
                     raise ValidationError({"not_enough_funds":'The account does not have enough balance to make this transaction.'})
 
     def save(self, *args, **kwargs):

@@ -20,6 +20,6 @@ admin.site.register([TreasuryBondsTransaction])
 
 @admin.register(MarketAssetTransaction)
 class MarketAssetTransaction(admin.ModelAdmin):
-    fields =['user', 'transaction_type', ('wallet', 'account'),'asset', 'amount', ('price', 'currency'),'currency_price',('commission','commission_currency'), 'transaction_date']
+    fields =['user', 'transaction_type', ('wallet', 'account'),'asset', 'amount', ('price', 'currency'),'currency_price',('commission'), 'transaction_date']
 
 

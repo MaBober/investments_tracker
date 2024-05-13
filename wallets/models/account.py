@@ -284,7 +284,7 @@ class Account(BaseModel):
         if transaction.account != self:
             raise ValidationError('The transaction must be made with this account.')
         
-        if transaction.currency not in self.currencies.all():
+        if transaction.account_currency not in self.currencies.all():
             raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
         
         if transaction.transaction_type != 'B':
@@ -297,17 +297,15 @@ class Account(BaseModel):
             asset=transaction.asset,
             amount=transaction.amount,
             price=transaction.price,
-            currency=transaction.currency,
+            account_currency=transaction.account_currency,
             currency_price=transaction.currency_price,
             commission=transaction.commission,
-            commission_currency=transaction.commission_currency,
-            commission_currency_price=transaction.commission_currency_price,
             buy_transaction=transaction,
             active=True
         )
         user_asset.save()
 
-        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update = self.balances.get(currency=transaction.account_currency)
         balance_to_update.balance -= transaction.total_price
         balance_to_update.save()
 
@@ -338,7 +336,7 @@ class Account(BaseModel):
                 user_asset.sell_transactions.add(transaction)
                 user_asset.save()
 
-        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update = self.balances.get(currency=transaction.account_currency)
         balance_to_update.balance += transaction.total_price
         balance_to_update.save()
 
@@ -352,7 +350,7 @@ class Account(BaseModel):
         if transaction.account != self:
             raise ValidationError('The transaction must be made with this account.')
         
-        if transaction.currency not in self.currencies.all():
+        if transaction.account_currency not in self.currencies.all():
             raise ValidationError('The currency of the transaction must be the same as the currency of the account.')
         
         if transaction.transaction_type != 'B':

@@ -180,12 +180,10 @@ class UserAsset(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
 
-    currency = models.ForeignKey(Currency, related_name='user_assets', on_delete=models.PROTECT)
+    account_currency = models.ForeignKey(Currency, related_name='user_assets', on_delete=models.PROTECT)
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    commission_currency = models.ForeignKey(Currency, related_name='user_assets_commission', on_delete=models.PROTECT)
-    commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)    
 
     buy_transaction = models.ForeignKey('MarketAssetTransaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
     sell_transactions = models.ManyToManyField('MarketAssetTransaction', related_name='sell_user_assets', blank=True)
@@ -208,15 +206,12 @@ class UserAsset(models.Model):
 
         price_in_asset_currency = self.amount * self.price
 
-        if self.currency not in self.account.currencies.all():
+        if self.asset.price_currency != self.account_currency:
             price_in_account_currency = price_in_asset_currency * self.currency_price
         else:
             price_in_account_currency = price_in_asset_currency
 
-        if self.commission_currency in self.account.currencies.all():
-            commission = self.commission
-        else:
-            commission = self.commission * self.commission_currency_price
+        commission = self.commission
 
         return price_in_account_currency + commission
     
@@ -228,17 +223,17 @@ class UserAsset(models.Model):
         except AssetPrice.DoesNotExist:
             recent_price = self.price
 
-        if self.currency in self.account.currencies.all():
-            return self.amount * recent_price
-        
-        else:
+        if self.asset.price_currency != self.account_currency:
             try:
-                recent_currency_price = self.currency.prices.latest('date').price
+                recent_currency_price = self.asset.price_currency.prices.latest('date').price
             except CurrencyPrice.DoesNotExist:
                 recent_currency_price = self.currency_price
             
             return self.amount * recent_price * recent_currency_price
+        
+        else:
 
+            return self.amount * recent_price
             
 
 class RetailBonds(models.Model):
