@@ -259,12 +259,12 @@ class RetailBonds(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        if not self.pk and self.current_value is None:
-            self.current_value = self.nominal_value
-        elif self.pk and self.current_value is None:  # if the object is being updated and current_value is not set
-            raise ValueError({"current_value":"current_value cannot be empty during an update"})
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk and self.current_value is None:
+    #         self.current_value = self.nominal_value
+    #     elif self.pk and self.current_value is None:  # if the object is being updated and current_value is not set
+    #         raise ValueError({"current_value":"current_value cannot be empty during an update"})
+    #     super().save(*args, **kwargs)
 
     @property
     def maturity_date_delta(self):
@@ -361,13 +361,26 @@ class UserTreasuryBonds(models.Model):
 
         days_from_issue = (timezone.now().date() - self.issue_date).days
 
-        daily_interest_rate = self.bond.initial_interest_rate / 365
+        if self.__check_if_contains_leap_year():
+            daily_interest_rate = self.bond.initial_interest_rate / 366
+        else:
+            daily_interest_rate = self.bond.initial_interest_rate / 365
 
         current_interest_rate = round(daily_interest_rate * days_from_issue, 2) / 100
         current_single_value = self.bond.nominal_value  * (1 + current_interest_rate)
 
         return current_single_value 
         
+    def __check_if_contains_leap_year(self):
+        import calendar
+        ## add a year to the issue date and check if it has a additional day
+
+        year = self.issue_date.year+1
+        _, days_in_feb = calendar.monthrange(year, 2)
+
+        return days_in_feb == 29
+ 
+
 
 
 

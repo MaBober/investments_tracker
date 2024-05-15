@@ -69,16 +69,10 @@ class UserDetailedTreasuryBondsSerializer(serializers.ModelSerializer):
 
 class UserSimpleTreasuryBondsSerializer(UserDetailedTreasuryBondsSerializer):
     
-        treasury_bond = serializers.SerializerMethodField()
-    
-        def get_treasury_bond(self, obj):
-    
-            treasury_bond_to_present = TreasuryBonds.objects.get(id=obj['bond'])
-            return f'{treasury_bond_to_present.code}'
-    
         class Meta:
             model = UserTreasuryBonds
             fields = [
-                "treasury_bond",
-                "amount"
+                "bond",
+                "amount",
+                "current_value"
             ]
