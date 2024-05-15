@@ -52,4 +52,18 @@ class Wallet(BaseModel):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def current_value(self):
+        """
+        Get the current value of the account
+        """
+
+        active_assets = self.assets.all().filter(active=True)
+        active_bonds = self.bonds.all().filter(active=True)
+
+        total_value_assets = sum([asset.current_value for asset in active_assets])
+        total_value_bonds = sum([bond.current_value for bond in active_bonds])
+
+        return total_value_assets + total_value_bonds
 

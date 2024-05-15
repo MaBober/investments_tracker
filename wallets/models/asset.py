@@ -249,8 +249,10 @@ class RetailBonds(models.Model):
 
     price_currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     asset_type = models.ForeignKey(AssetType, on_delete=models.PROTECT)
-    current_value = models.DecimalField(max_digits=20, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))], null=True, blank=True)
+
     initial_interest_rate = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))])
+    is_intrest_rate_fixed = models.BooleanField(default=True, blank=False, null=False)
+    is_first_year_interest_fixed = models.BooleanField(default=True, blank=False, null=False)
 
     premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.0'))])
     
@@ -272,6 +274,9 @@ class RetailBonds(models.Model):
             return relativedelta(months=self.duration)
         if self.duration_unit == 'Y':
             return relativedelta(years=self.duration)
+        
+
+            
         
 
 
@@ -334,4 +339,36 @@ class UserTreasuryBonds(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def current_value(self):
+
+        years_from_issue = (timezone.now().date() - self.issue_date).days / 365
+
+        if years_from_issue < 1:
+
+            if self.bond.is_intrest_rate_fixed or self.bond.is_first_year_interest_fixed:
+                current_single_value = self.__first_year_interest()
+            else:
+                current_single_value = self.bond.nominal_value
+        
+        else:
+            current_single_value = self.bond.nominal_value
+
+        return current_single_value * self.amount
+        
+    def __first_year_interest(self):
+
+        days_from_issue = (timezone.now().date() - self.issue_date).days
+
+        daily_interest_rate = self.bond.initial_interest_rate / 365
+
+        current_interest_rate = round(daily_interest_rate * days_from_issue, 2) / 100
+        current_single_value = self.bond.nominal_value  * (1 + current_interest_rate)
+
+        return current_single_value 
+        
+
+
+
 

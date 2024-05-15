@@ -44,11 +44,16 @@ class Transaction(models.Model):
         if self.transaction_type == 'B':
 
             price_in_asset_currency = self.amount * self.price
-
-            if self.asset.price_currency != self.account_currency:
-                price_in_account_currency = price_in_asset_currency * self.currency_price
-            else:
-                price_in_account_currency = price_in_asset_currency
+            try:
+                if self.asset.price_currency != self.account_currency:  
+                    price_in_account_currency = price_in_asset_currency * self.currency_price
+                else:
+                    price_in_account_currency = price_in_asset_currency
+            except AttributeError:
+                if self.bond.price_currency != self.account_currency:
+                    price_in_account_currency = price_in_asset_currency * self.currency_price
+                else:
+                    price_in_account_currency = price_in_asset_currency
 
             commission = self.commission
 

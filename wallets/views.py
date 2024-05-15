@@ -460,15 +460,9 @@ from django.http import HttpResponse
 def AccountTest(account_id):
 
     account = Account.objects.get(id=1)
-    suma = 0
-    for asset in account.assets.filter(active=True):
-        
-        print(asset.total_price, asset.current_value)
-        suma = suma + asset.current_value
+    wallet = Wallet.objects.get(id=1)
 
-    print(suma) 
-    print(account)
-    return HttpResponse('Hello, World!')
+    return HttpResponse(wallet.current_value)
 
 
 

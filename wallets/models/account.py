@@ -120,7 +120,6 @@ class Account(BaseModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    current_value = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
     class Meta:
         unique_together = ['owner', 'name']
@@ -151,15 +150,20 @@ class Account(BaseModel):
             return balance.balance
         else:
             return 0
-        
-    def get_current_value(self):
+    
+    @property
+    def current_value(self):
         """
         Get the current value of the account
         """
 
         active_assets = self.assets.all().filter(active=True)
+        active_bonds = self.bonds.all().filter(active=True)
 
-        print(active_assets)
+        total_value = sum([asset.current_value for asset in active_assets])
+        total_value += sum([bond.current_value for bond in active_bonds])
+
+        return total_value
             
     def add_deposit(self, deposit):
         """
@@ -369,7 +373,7 @@ class Account(BaseModel):
         )
         user_bond.save()
 
-        balance_to_update = self.balances.get(currency=transaction.currency)
+        balance_to_update = self.balances.get(currency=transaction.currency_price)
         balance_to_update.balance -= transaction.total_price
         balance_to_update.save()
 
