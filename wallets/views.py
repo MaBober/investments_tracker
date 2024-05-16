@@ -340,7 +340,7 @@ class ObjectTreasuryBondsTransactionsList(ObjectDependeciesList):
         for param in params:
             
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 elif param == 'after':
@@ -369,7 +369,7 @@ class ObjectMarketTransactionsList(ObjectDependeciesList):
         for param in params:
 
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 elif param == 'after':
@@ -408,7 +408,7 @@ class ObjectUserAssetsList(ObjectDependeciesList):
         
         for param in params:
             try:
-                if param == 'currency' or param == 'commission_currency':
+                if param == 'currency':
                     queryset = queryset.filter(currency__code=params[param])
                     continue
                 else:
@@ -419,12 +419,9 @@ class ObjectUserAssetsList(ObjectDependeciesList):
         if 'detailed' not in params:
             queryset = queryset.values('asset').annotate(amount=Sum('amount'))
         
-
-
         return queryset
     
 class ObjectUserTreasuryBondsList(ObjectDependeciesList):
-
 
     serializer_class = UserDetailedTreasuryBondsSerializer
     object_class = UserTreasuryBonds
@@ -449,12 +446,54 @@ class ObjectUserTreasuryBondsList(ObjectDependeciesList):
                 queryset = queryset.filter(**{param: params[param]})
             except FieldError:
                 pass
-
-        if 'detailed' not in params:
-            queryset = queryset.values('bond').annotate(amount=Sum('amount'))
         
         return queryset
 
+from django.http import HttpResponse
+
+def AccountTest(account_id):
+
+    wallet = Wallet.objects.get(id=1)
+
+    free_cash = {}
+    for account in wallet.accounts.all():
+        if len(account.wallets.all()) == 1:
+            for balance in account.balances.all():
+                if balance.currency.code in free_cash:
+                    free_cash[balance.currency.code] += balance.balance
+                else:
+                    free_cash[balance.currency.code] = balance.balance
+
+
+    html =f'''
+    <h1>Wallet: {wallet.name}</h1>
+    <h2>Deposited: {wallet.cash_balance}</h2>
+    <h2>Free cash:</h2>
+    <ul>
+    '''
+
+    for key in free_cash:
+        if free_cash[key] != 0:
+            html += f'<li><h3>{key}: {free_cash[key]}</h3></li>'
+
+    html +=f'</ul><h2>Curent assets value: {wallet.current_value}</h2>'
+
+
+    html += f'<h1>Total wallet value: {wallet.current_value + sum(free_cash.values())}</h1>'
+
+    html += f'<h1>Income: {wallet.current_value + sum(free_cash.values()) - wallet.cash_balance}</h1>'
+
+    
+    propotion = wallet.wallet_proportion
+
+    html += '<hr><h1>Wallet proportion:</h1>'
+    html += f'<h2>Assets: {round(propotion["assets"][0]*100, 2)} %  / {round(propotion["assets"][1], 2)} zł</h2>'
+    html += f'<h2>Bonds: {round(propotion["bonds"][0]*100, 2)} % / {round(propotion["bonds"][1], 2)} zł</h2>'
+
+    for bond in wallet.bonds.all():
+        html += f'<h3>{bond.bond.code} - {bond.current_value} zł</h3>'
+
+    return HttpResponse(html)
 
 
 

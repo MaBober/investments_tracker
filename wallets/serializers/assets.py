@@ -20,15 +20,6 @@ class UserDetailedAssetSerializer(serializers.ModelSerializer):
         }
     )
 
-    commission_currency = serializers.SlugRelatedField(
-        slug_field='code',
-        queryset=Currency.objects.all(),
-        required=True,
-        error_messages={
-            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
-        }
-    )
-
     asset = serializers.SlugRelatedField(
         slug_field='code',
         queryset=MarketAsset.objects.all(),
@@ -78,16 +69,10 @@ class UserDetailedTreasuryBondsSerializer(serializers.ModelSerializer):
 
 class UserSimpleTreasuryBondsSerializer(UserDetailedTreasuryBondsSerializer):
     
-        treasury_bond = serializers.SerializerMethodField()
-    
-        def get_treasury_bond(self, obj):
-    
-            treasury_bond_to_present = TreasuryBonds.objects.get(id=obj['bond'])
-            return f'{treasury_bond_to_present.code}'
-    
         class Meta:
             model = UserTreasuryBonds
             fields = [
-                "treasury_bond",
-                "amount"
+                "bond",
+                "amount",
+                "current_value"
             ]

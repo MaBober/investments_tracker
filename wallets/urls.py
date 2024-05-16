@@ -98,6 +98,7 @@ urlpatterns = [
     path('users/<int:user_id>/treasury_bond_transactions/', views.ObjectTreasuryBondsTransactionsList.as_view(), name='user-treasury-bond-transactions'),
     path('users/<int:user_id>/market_assets/', views.ObjectUserAssetsList.as_view(), name='user-assets'),
     path('users/<int:user_id>/treasury_bonds/', views.ObjectUserTreasuryBondsList.as_view(), name='user-treasury-bonds'),
+    path('account/test/', views.AccountTest, name='account-test'),
     
 ]
 

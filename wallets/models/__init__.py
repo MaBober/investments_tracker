@@ -1,5 +1,5 @@
 from .abstract import BaseModel, validate_name_length
-from .country import Country, Currency
+from .country import Country, Currency, CurrencyPrice
 
 from .wallet import Wallet
 from .account import Account, AccountInstitution, AccountInstitutionType, AccountType, AccountCurrencyBalance

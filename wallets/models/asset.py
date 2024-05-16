@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
-from . import Currency, Country, Account, Wallet
+from . import Currency, Country, Account, Wallet, CurrencyPrice
 
 def past_or_present_date(value):
     if value > timezone.now().date():
@@ -180,12 +180,10 @@ class UserAsset(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
 
-    currency = models.ForeignKey(Currency, related_name='user_assets', on_delete=models.PROTECT)
+    account_currency = models.ForeignKey(Currency, related_name='user_assets', on_delete=models.PROTECT)
     currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)
 
     commission = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0)
-    commission_currency = models.ForeignKey(Currency, related_name='user_assets_commission', on_delete=models.PROTECT)
-    commission_currency_price = models.DecimalField(max_digits=20, decimal_places=10, validators=[MinValueValidator(0)], default=0)    
 
     buy_transaction = models.ForeignKey('MarketAssetTransaction', related_name='buy_user_assets', on_delete=models.CASCADE, null=True, blank=True)
     sell_transactions = models.ManyToManyField('MarketAssetTransaction', related_name='sell_user_assets', blank=True)
@@ -202,6 +200,40 @@ class UserAsset(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def total_price(self):
+
+        price_in_asset_currency = self.amount * self.price
+
+        if self.asset.price_currency != self.account_currency:
+            price_in_account_currency = price_in_asset_currency * self.currency_price
+        else:
+            price_in_account_currency = price_in_asset_currency
+
+        commission = self.commission
+
+        return price_in_account_currency + commission
+    
+    @property
+    def current_value(self):
+
+        try:
+            recent_price = self.asset.prices.latest('date').price
+        except AssetPrice.DoesNotExist:
+            recent_price = self.price
+
+        if self.asset.price_currency != self.account_currency:
+            try:
+                recent_currency_price = self.asset.price_currency.prices.latest('date').price
+            except CurrencyPrice.DoesNotExist:
+                recent_currency_price = self.currency_price
+            
+            return self.amount * recent_price * recent_currency_price
+        
+        else:
+
+            return self.amount * recent_price
             
 
 class RetailBonds(models.Model):
@@ -217,20 +249,22 @@ class RetailBonds(models.Model):
 
     price_currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     asset_type = models.ForeignKey(AssetType, on_delete=models.PROTECT)
-    current_value = models.DecimalField(max_digits=20, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))], null=True, blank=True)
+
     initial_interest_rate = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.01'))])
+    is_intrest_rate_fixed = models.BooleanField(default=True, blank=False, null=False)
+    is_first_year_interest_fixed = models.BooleanField(default=True, blank=False, null=False)
 
     premature_withdrawal_fee = models.DecimalField(max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.0'))])
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        if not self.pk and self.current_value is None:
-            self.current_value = self.nominal_value
-        elif self.pk and self.current_value is None:  # if the object is being updated and current_value is not set
-            raise ValueError({"current_value":"current_value cannot be empty during an update"})
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk and self.current_value is None:
+    #         self.current_value = self.nominal_value
+    #     elif self.pk and self.current_value is None:  # if the object is being updated and current_value is not set
+    #         raise ValueError({"current_value":"current_value cannot be empty during an update"})
+    #     super().save(*args, **kwargs)
 
     @property
     def maturity_date_delta(self):
@@ -240,6 +274,9 @@ class RetailBonds(models.Model):
             return relativedelta(months=self.duration)
         if self.duration_unit == 'Y':
             return relativedelta(years=self.duration)
+        
+
+            
         
 
 
@@ -302,4 +339,49 @@ class UserTreasuryBonds(models.Model):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def current_value(self):
+
+        years_from_issue = (timezone.now().date() - self.issue_date).days / 365
+
+        if years_from_issue < 1:
+
+            if self.bond.is_intrest_rate_fixed or self.bond.is_first_year_interest_fixed:
+                current_single_value = self.__first_year_interest()
+            else:
+                current_single_value = self.bond.nominal_value
+        
+        else:
+            current_single_value = self.bond.nominal_value
+
+        return current_single_value * self.amount
+        
+    def __first_year_interest(self):
+
+        days_from_issue = (timezone.now().date() - self.issue_date).days
+
+        if self.__check_if_contains_leap_year():
+            daily_interest_rate = self.bond.initial_interest_rate / 366
+        else:
+            daily_interest_rate = self.bond.initial_interest_rate / 365
+
+        current_interest_rate = round(daily_interest_rate * days_from_issue, 2) / 100
+        current_single_value = self.bond.nominal_value  * (1 + current_interest_rate)
+
+        return current_single_value 
+        
+    def __check_if_contains_leap_year(self):
+        import calendar
+        ## add a year to the issue date and check if it has a additional day
+
+        year = self.issue_date.year+1
+        _, days_in_feb = calendar.monthrange(year, 2)
+
+        return days_in_feb == 29
+ 
+
+
+
+
 

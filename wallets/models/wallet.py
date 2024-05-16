@@ -52,4 +52,61 @@ class Wallet(BaseModel):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def current_value(self):
+        """
+        Get the current value of the account
+        """
+
+        active_assets = self.assets.all().filter(active=True)
+        active_bonds = self.bonds.all().filter(active=True)
+
+        total_value_assets = sum([asset.current_value for asset in active_assets])
+        total_value_bonds = sum([bond.current_value for bond in active_bonds])
+
+        total_value = total_value_assets + total_value_bonds
+
+        wallet_proportion = {
+            'assets': (total_value_assets/total_value) if total_value != 0 else 0,
+            'bonds': (total_value_bonds/total_value) if total_value != 0 else 0
+        }
+
+        return round(total_value,2)
+    
+    @property
+    def wallet_proportion(self):
+        """
+        Get the proportion of the wallet value that is in assets and bonds
+        """
+
+
+        active_assets = self.assets.all().filter(active=True)
+        active_bonds = self.bonds.all().filter(active=True)
+
+        total_value_assets = sum([asset.current_value for asset in active_assets])
+        total_value_bonds = sum([bond.current_value for bond in active_bonds])
+
+        total_value = total_value_assets + total_value_bonds
+
+        wallet_proportion = {
+            'assets': ((total_value_assets/total_value) if total_value != 0 else 0, total_value_assets),
+            'bonds': ((total_value_bonds/total_value) if total_value != 0 else 0, total_value_bonds)
+        }
+
+        return wallet_proportion
+    
+    @property
+    def cash_balance(self):
+        """
+        Get the cash balance of the account
+        """
+
+        deposits = self.deposits.all()
+        withdrawals = self.withdrawals.all()
+
+        total_deposits = sum([deposit.amount for deposit in deposits])
+        total_withdrawals = sum([withdrawal.amount for withdrawal in withdrawals])
+
+        return total_deposits - total_withdrawals
 
