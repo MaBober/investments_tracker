@@ -83,7 +83,7 @@ class DepositCreateSerializer(serializers.ModelSerializer):
 
         account_id = self.initial_data.get('account')
         try:
-            account = Account.objects.get(pk=account_id)
+            account = Account.objects.first()
         except ObjectDoesNotExist:
             return value
 

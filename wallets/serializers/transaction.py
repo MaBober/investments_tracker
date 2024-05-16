@@ -21,6 +21,15 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
 
+    account_currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
+
     class Meta:
        # model = Transaction
         fields = [
@@ -31,10 +40,9 @@ class TransactionSerializer(serializers.ModelSerializer):
             'wallet_id',
             'amount',
             'price',
-            'currency',
+            'account_currency',
             'currency_price',
             'commission',
-            'commission_currency',
             'transaction_date',
             'total_price'
         ]
@@ -55,9 +63,8 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
     wallet = serializers.PrimaryKeyRelatedField(queryset=Wallet.objects.all())
 
     code = serializers.CharField(max_length=10, required=True, write_only=True)
-    exchange_market = serializers.CharField(required=True, write_only=True)
 
-    currency = serializers.SlugRelatedField(
+    account_currency = serializers.SlugRelatedField(
         slug_field='code',
         queryset=Currency.objects.all(),
         required=True,
@@ -65,20 +72,13 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
             'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
         }
     )
-    currency_price = serializers.DecimalField(max_digits=12, decimal_places=2, required=True)
+    currency_price = serializers.DecimalField(max_digits=12, decimal_places=4, required=True)
     commission = serializers.DecimalField(max_digits=12, decimal_places=2, required=True, min_value=0)
-    commission_currency = serializers.SlugRelatedField(
-        slug_field='code',
-        queryset=Currency.objects.all(),
-        required=True,
-        error_messages={
-            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
-        }
-    )
+
 
     class Meta:
         # model = Transaction
-        fields = ['id', 'user_id', 'account', 'wallet', 'transaction_type', 'amount', 'price', 'currency','currency_price', 'commission', 'commission_currency',  'transaction_date']
+        fields = ['id', 'user_id', 'account', 'wallet', 'transaction_type', 'amount', 'price', 'account_currency','currency_price', 'commission',  'transaction_date']
         abstract = True
 
 
@@ -96,7 +96,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
 
         return value
     
-    def validate_currency(self, value):
+    def validate_account_currency(self, value):
 
         account_id = self.initial_data.get('account')
         try:
@@ -107,88 +107,65 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         if value not in account.currencies.all():
             raise serializers.ValidationError('This currency is not supported by this account.')
         
-        return value
-        
-    
+        return value   
 
     
     def validate(self, data):
 
         wallet = data.get('wallet')
         account = data.get('account')
-        currency = Currency.objects.get(code=self.initial_data.get('currency'))
+        account_currency = Currency.objects.get(code=self.initial_data.get('account_currency'))
 
         if wallet and account:
             if not wallet.accounts.filter(pk=account.pk).exists():
                 raise serializers.ValidationError({'account_wallet_mismatch': 'The account must belong to the wallet to make a transaction.'})
             
-            total_price = self.calculate_total_price()
-
-            if total_price > account.get_balance(currency):
-                raise serializers.ValidationError({"not_enough_funds":'Insufficient funds in the account.'})
-            if total_price == -1:
-                raise serializers.ValidationError({'error': 'An error occurred while calculating the total price. Verify data.'})
-
-        return data
-
-    def calculate_total_price(self):
-
-        try:
-
-            transaction_type = self.initial_data.get('transaction_type')
-            amount = float(self.initial_data.get('amount'))
-            price = float(self.initial_data.get('price'))
-            currency = self.initial_data.get('currency')
-            currency_price = float(self.initial_data.get('currency_price'))
-            commission = float(self.initial_data.get('commission'))
-            commission_currency = self.initial_data.get('commission_currency')
+    #     total_price = self.calculate_total_price()
         
 
-            account = Account.objects.get(pk=self.initial_data.get('account'))
+    #     if total_price > account.get_balance(currency):
+    #         raise serializers.ValidationError({"not_enough_funds":'Insufficient funds in the account.'})
+    #     if total_price == -1:
+    #         raise serializers.ValidationError({'error': 'An error occurred while calculating the total price. Verify data.'})
 
-            if transaction_type == 'B':
+    #     return data
 
-                price_in_asset_currency = amount * price
+    # def calculate_total_price(self):
 
-                if currency not in account.currencies.all():
-                    price_in_account_currency = price_in_asset_currency * currency_price
-                else:
-                    price_in_account_currency = price_in_asset_currency
+    #     try:
 
-                if commission_currency in account.currencies.all():
-                    commission = commission
-                else:
-                    pass
+    #         transaction_type = self.initial_data.get('transaction_type')
+    #         amount = float(self.initial_data.get('amount'))
+    #         price = float(self.initial_data.get('price'))
+    #         currency = self.initial_data.get('account_currency')
+    #         currency_price = float(self.initial_data.get('currency_price'))
+    #         commission = float(self.initial_data.get('commission'))
 
-                return price_in_account_currency + commission
+    #         account = Account.objects.get(pk=self.initial_data.get('account'))
+
+    #         if transaction_type == 'B':
+
+    #             price_in_asset_currency = amount * price
+
+    #             if currency not in account.currencies.all():
+    #                 price_in_account_currency = price_in_asset_currency * currency_price
+    #             else:
+    #                 price_in_account_currency = price_in_asset_currency
+
+    #             commission = commission
+
+    #             return price_in_account_currency + commission
             
-            if transaction_type == 'S':
+    #         if transaction_type == 'S':
 
-                return 0
+    #             return 0
 
-                # price_in_asset_currency = amount * price
-
-                # if currency not in account.currencies.all():
-                #     price_in_account_currency = price_in_asset_currency * currency_price
-                # else:
-                #     price_in_account_currency = price_in_asset_currency
-
-                # if commission_currency in account.currencies.all():
-                #     commission = commission
-                # else:
-                #     pass
-
-                # return price_in_account_currency - commission
-            else:
-                return -1
+    #         else:
+    #             return -1
             
-        except:
-            return -1    
-        
+    #     except:
+    #         return -1    
     
-    
-
-
 
 class MarketAssetTransactionSerializer(TransactionSerializer):
     """
@@ -198,6 +175,15 @@ class MarketAssetTransactionSerializer(TransactionSerializer):
     representations and vice versa. It specifies the fields that should be
     included in the serialized output.
     """
+
+    asset = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=MarketAsset.objects.all(),
+        required=False,
+        error_messages={
+            'does_not_exist': '{value} is a wrong asset. Please provide a valid asset.'
+        }
+    )
 
     class Meta:
         model = MarketAssetTransaction
@@ -211,13 +197,12 @@ class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
 
     This serializer is used to convert JSON data into a MarketAssetTransaction model instance.
     """
-
-    asset_code = serializers.SerializerMethodField()
+    exchange_market = serializers.CharField(required=True, write_only=True)
 
     class Meta:
         model = MarketAssetTransaction
         market_asset_fields = TransactionCreateSerializer.Meta.fields.copy()
-        market_asset_fields.extend(['code', 'exchange_market', 'asset_code'])
+        market_asset_fields.extend(['code', 'exchange_market'])
 
         fields = market_asset_fields
 
@@ -227,16 +212,13 @@ class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
         'asset' : {'read_only': True,'required': False}
         }
 
-    def get_asset_code(self, obj):
-        return obj.asset.code
-    
-
     def validate(self, data):
 
         super().validate(data)
 
         code = data.get('code')
         exchange_market = data.get('exchange_market')
+        account_currency = Currency.objects.get(code=self.initial_data.get('account_currency'))
         user = self.context['request'].user
         account = data.get('account')
 
@@ -250,6 +232,15 @@ class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
         except ObjectDoesNotExist:
             raise serializers.ValidationError('Asset does not exist.')
         
+        if data.get('transaction_type') == 'B':
+
+            total_price = self.calculate_total_price(asset)
+
+            if total_price > account.get_balance(account_currency):
+                raise serializers.ValidationError({"not_enough_funds":'Insufficient funds in the account.'})
+            if total_price == -1:
+                raise serializers.ValidationError({'error': 'An error occurred while calculating the total price. Verify data.'})
+    
         if data.get('transaction_type') == 'S':
         
             assets = user.assets.filter(asset=asset, active=True, account=account)
@@ -265,6 +256,33 @@ class MarketAssetTransactionCreateSerializer(TransactionCreateSerializer):
 
         return data
 
+    def calculate_total_price(self, asset):
+
+        try:
+  
+            amount = float(self.initial_data.get('amount'))
+            price = float(self.initial_data.get('price'))
+            account_currency = self.initial_data.get('account_currency')
+            currency_price = float(self.initial_data.get('currency_price'))
+            commission = float(self.initial_data.get('commission'))
+
+            price_in_asset_currency = amount * price
+
+            if asset.price_currency.code != account_currency:
+                price_in_account_currency = price_in_asset_currency * currency_price
+
+            else:
+                price_in_account_currency = price_in_asset_currency
+
+            commission = commission
+
+            return price_in_account_currency + commission
+            
+        except:
+            return -1    
+        
+
+
 
 class TreasuryBondsTransactionSerializer(TransactionSerializer):
     """
@@ -274,6 +292,17 @@ class TreasuryBondsTransactionSerializer(TransactionSerializer):
     representations and vice versa. It specifies the fields that should be
     included in the serialized output.
     """
+
+    
+    account_currency = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Currency.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': '{value} is a wrong currency. Please provide a valid currency.'
+        }
+    )
+
 
     class Meta:
         model = TreasuryBondsTransaction

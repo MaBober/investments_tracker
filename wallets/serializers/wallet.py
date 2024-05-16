@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account
+from wallets.models import Wallet, Account, TreasuryBonds, UserTreasuryBonds
+from wallets.serializers.assets import UserSimpleTreasuryBondsSerializer
 
 
 class WalletSerializer(serializers.ModelSerializer):
@@ -18,12 +19,17 @@ class WalletSerializer(serializers.ModelSerializer):
         owner_id: A UserSerializer instance that represents the owner of the wallet.
         co_owners: A UserSerializer instance that represents the co-owner of the wallet.
     """
+
     owner_id = CharField(source='owner.id', read_only=True)
     co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    current_value = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    bonds = UserSimpleTreasuryBondsSerializer(many=True, read_only=True)
+
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at', 'current_value', 'bonds']
+
 
 
 class WalletCreateSerializer(serializers.ModelSerializer):

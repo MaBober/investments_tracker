@@ -25,13 +25,13 @@ def test_get_treasury_bonds_transactions(admin_logged_client, test_treasury_bond
     assert response.data['results'][0]['amount'] == "{:.2f}".format(test_treasury_bonds_transactions[0].amount)
     assert response.data['results'][0]['price'] == "{:.2f}".format(test_treasury_bonds_transactions[0].price)
     assert response.data['results'][0]['commission'] == "{:.2f}".format(test_treasury_bonds_transactions[0].commission)
-    assert response.data['results'][0]['commission_currency'] == test_treasury_bonds_transactions[0].commission_currency.id
+    assert response.data['results'][0]['commission_currency'] == test_treasury_bonds_transactions[0].commission_currency.code
     assert response.data['results'][0]['transaction_type'] == test_treasury_bonds_transactions[0].transaction_type
     assert response.data['results'][0]['transaction_date'] == test_treasury_bonds_transactions[0].transaction_date.astimezone(timezone.get_current_timezone()).isoformat()
     assert response.data['results'][0]['wallet_id'] == test_treasury_bonds_transactions[0].wallet.id
     assert response.data['results'][0]['wallet_id'] == test_treasury_bonds_transactions[0].account.id
     assert response.data['results'][0]['user_id'] == test_treasury_bonds_transactions[0].user.id
-    assert response.data['results'][0]['currency'] == test_treasury_bonds_transactions[0].currency.id
+    assert response.data['results'][0]['currency'] == test_treasury_bonds_transactions[0].currency.code
     assert response.data['results'][0]['bond'] == test_treasury_bonds_transactions[0].bond.id
 
 
@@ -65,13 +65,13 @@ def test_get_treasury_bonds_transaction_owner(api_client, test_treasury_bonds_tr
     assert response.data['amount'] == "{:.2f}".format(test_treasury_bonds_transactions[0].amount)
     assert response.data['price'] == "{:.2f}".format(test_treasury_bonds_transactions[0].price)
     assert response.data['commission'] == "{:.2f}".format(test_treasury_bonds_transactions[0].commission)
-    assert response.data['commission_currency'] == test_treasury_bonds_transactions[0].commission_currency.id
+    assert response.data['commission_currency'] == test_treasury_bonds_transactions[0].commission_currency.code
     assert response.data['transaction_type'] == test_treasury_bonds_transactions[0].transaction_type
     assert response.data['transaction_date'] == test_treasury_bonds_transactions[0].transaction_date.astimezone(timezone.get_current_timezone()).isoformat()
     assert response.data['wallet_id'] == test_treasury_bonds_transactions[0].wallet.id
     assert response.data['wallet_id'] == test_treasury_bonds_transactions[0].account.id
     assert response.data['user_id'] == test_treasury_bonds_transactions[0].user.id
-    assert response.data['currency'] == test_treasury_bonds_transactions[0].currency.id
+    assert response.data['currency'] == test_treasury_bonds_transactions[0].currency.code
     assert response.data['bond'] == test_treasury_bonds_transactions[0].bond.id
 
 
