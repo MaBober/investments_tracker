@@ -45,12 +45,7 @@ class WalletHandler:
         """
         if request.method == 'GET':
 
-            parameters = request.query_params.dict()
-
-            if not request.user.is_staff:
-                parameters['owner_id'] = request.user.id
-            
-            wallets = WalletController.list_wallets(**parameters)
+            wallets = WalletController.list_wallets(request)
 
             return Response(WalletSerializer(wallets, many=True).data, status=200)
             

@@ -1,5 +1,8 @@
 from django.db.models.query import QuerySet
 from django.contrib.auth.models import User
+
+from rest_framework.request import Request
+
 from wallets.models import Wallet
 from wallets.repository import WalletRepository
 
@@ -39,16 +42,23 @@ class WalletController:
         return wallet
 
     @staticmethod
-    def list_wallets(**parameters: dict) -> QuerySet[Wallet]:
+    def list_wallets(request: Request) -> QuerySet[Wallet]:
         """
         List all wallets by accessing the repository.
 
         Args:
+            user (User): The user requesting the wallets.
             **parameters (dict): The query parameters to filter the wallets.
 
         Returns:
             QuerySet: All listed wallets that match the query parameters.
+            
         """
+
+        parameters = request.query_params.dict()
+
+        if not request.user.is_staff:
+            parameters['owner_id'] = request.user.id
 
         wallets = WalletRepository.get_all_wallets(**parameters)
 

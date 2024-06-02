@@ -1,4 +1,6 @@
 from django.db.models import QuerySet
+from django.core.exceptions import FieldDoesNotExist
+
 from django.contrib.auth.models import User
 
 from wallets.models import Wallet
@@ -78,10 +80,18 @@ class WalletRepository:
             QuerySet: The wallets.
         """
 
-        all_wallets = Wallet.objects.filter(**parameters)
+        valid_parameters = {}
+        for key in parameters:
+            try:
+                Wallet._meta.get_field(key)
+                valid_parameters[key] = parameters[key]
+            except FieldDoesNotExist:
+                continue
+
+        all_wallets = Wallet.objects.filter(**valid_parameters)
 
         return all_wallets
-
+    
     @staticmethod
     def get_single_wallet(wallet_id: int) -> Wallet:
         """
