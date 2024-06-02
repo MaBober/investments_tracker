@@ -54,7 +54,7 @@ class WalletCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'description']
+        fields = ['id','name', 'owner_id', 'co_owners', 'description']
 
 
     def validate_co_owners(self, value):

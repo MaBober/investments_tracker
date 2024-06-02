@@ -1,21 +1,26 @@
+
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.core.exceptions import ValidationError, FieldError
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
+from django.http import Http404, HttpResponseNotAllowed
+from django.views.decorators.csrf import csrf_exempt
+from django.views import View
+
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
 
 from .models import Wallet, Account, Deposit, MarketAssetTransaction, TreasuryBondsTransaction, Withdrawal, UserAsset, UserTreasuryBonds
-from .serializers import WalletSerializer, WalletCreateSerializer, UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
+from .serializers import UserSerializer, AccountSerializer, AccountCreateSerializer, DepositSerializer, DepositCreateSerializer, MarketAssetTransactionCreateSerializer, MarketAssetTransactionSerializer, WithdrawalSerializer, WithdrawalCreateSerializer, TreasuryBondsTransactionCreateSerializer, TreasuryBondsTransactionSerializer
 from .serializers import UserDetailedAssetSerializer, UserSimpleAssetSerializer, UserDetailedTreasuryBondsSerializer, UserSimpleTreasuryBondsSerializer
-
 from .permissions import IsOwnerOrCoOwner, IsOwner
+
+from .handlers import WalletHandler
     
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -54,45 +59,66 @@ class UserDetail(RetrieveAPIView):
     permission_classes = [IsOwnerOrCoOwner]
 
 
-class WalletViewSet(viewsets.ModelViewSet):
-    """
-    Viewset for Wallet model.
+@api_view(['GET', 'POST'])
+def WalletView(request):
+    if request.method == 'GET':
+        return WalletHandler.list(request)
+
+    elif request.method == 'POST':
+        return WalletHandler.create(request)
+    else:
+        return HttpResponseNotAllowed(['GET', 'POST'])
     
-    This viewset provides CRUD operations for the Wallet model.
+@api_view(['GET', 'PATCH', 'DELETE'])
+def WalletDetailView(request, pk):
+    if request.method == 'GET':
+        return WalletHandler.detail(request, pk)
+    elif request.method == 'PATCH':
+        return WalletHandler.update(request, pk)
+    elif request.method == 'DELETE':
+        return WalletHandler.delete(request, pk)
+    else:
+        return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-    Attributes:
-        queryset: A queryset that retrieves all the wallets from the database.
-        permission_classes: A list of permission classes that determine who can access this view.
+# class WalletViewSet(viewsets.ModelViewSet):
+#     """
+#     Viewset for Wallet model.
+    
+#     This viewset provides CRUD operations for the Wallet model.
 
-    Methods:
-        perform_create: Creates a new wallet instance and associates it with the current user.
-        get_serializer_class: Returns the appropriate serializer class based on the request method.
-    """
+#     Attributes:
+#         queryset: A queryset that retrieves all the wallets from the database.
+#         permission_classes: A list of permission classes that determine who can access this view.
 
-    queryset = Wallet.objects.all()
-    permission_classes = [permissions.IsAdminUser, IsOwnerOrCoOwner, permissions.IsAuthenticated, IsOwner]
+#     Methods:
+#         perform_create: Creates a new wallet instance and associates it with the current user.
+#         get_serializer_class: Returns the appropriate serializer class based on the request method.
+#     """
 
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = [permissions.IsAdminUser]
-        elif self.action == 'create':
-            self.permission_classes = [permissions.IsAuthenticated]
-        elif self.action in ['retrieve', 'update']:
-            self.permission_classes = [IsOwnerOrCoOwner]
-        elif self.action == 'destroy':
-            self.permission_classes = [IsOwner]
-        return super(WalletViewSet, self).get_permissions()
+#     queryset = Wallet.objects.all()
+#     permission_classes = [permissions.IsAdminUser, IsOwnerOrCoOwner, permissions.IsAuthenticated, IsOwner]
 
-    def perform_create(self, serializer):
+#     def get_permissions(self):
+#         if self.action == 'list':
+#             self.permission_classes = [permissions.IsAdminUser]
+#         elif self.action == 'create':
+#             self.permission_classes = [permissions.IsAuthenticated]
+#         elif self.action in ['retrieve', 'update']:
+#             self.permission_classes = [IsOwnerOrCoOwner]
+#         elif self.action == 'destroy':
+#             self.permission_classes = [IsOwner]
+#         return super(WalletViewSet, self).get_permissions()
 
-        wallet = serializer.save(owner=self.request.user)
-        wallet.save()
+#     def perform_create(self, serializer):
 
-    def get_serializer_class(self):
+#         wallet = serializer.save(owner=self.request.user)
+#         wallet.save()
 
-        if self.request.method == 'POST' or self.request.method == 'PUT':
-            return WalletCreateSerializer
-        return WalletSerializer
+#     def get_serializer_class(self):
+
+#         if self.request.method == 'POST' or self.request.method == 'PUT':
+#             return WalletCreateSerializer
+#         return WalletSerializer
     
 
 class AccountViewSet(viewsets.ModelViewSet):
@@ -454,7 +480,7 @@ from django.http import HttpResponse
 def AccountTest(account_id):
 
     wallet = Wallet.objects.get(id=1)
-
+    print("E2LOs")
     free_cash = {}
     for account in wallet.accounts.all():
         if len(account.wallets.all()) == 1:
@@ -466,7 +492,7 @@ def AccountTest(account_id):
 
 
     html =f'''
-    <h1>Wallet: {wallet.name}</h1>
+    <h1>Wallet1: {wallet.name}</h1>
     <h2>Deposited: {wallet.cash_balance}</h2>
     <h2>Free cash:</h2>
     <ul>

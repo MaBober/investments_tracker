@@ -3,17 +3,18 @@ from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
+from .handlers import WalletHandler
 
-wallets_list = views.WalletViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
+# wallets_list = views.WalletViewSet.as_view({
+#     'get': 'list'
+# })
 
-wallets_detail = views.WalletViewSet.as_view({
-    'get': 'retrieve',
-    'put': 'update',
-    'delete': 'destroy'
-})
+
+# wallets_detail = views.WalletViewSet.as_view({
+#     'get': 'retrieve',
+#     'put': 'update',
+#     'delete': 'destroy'
+# })
 
 accounts_list = views.AccountViewSet.as_view({
     'get': 'list',
@@ -72,8 +73,8 @@ withdrawal_detail = views.WithdrawalViewSet.as_view({
 
 
 urlpatterns = [
-    path('wallets/', wallets_list, name='wallets-list'),
-    path('wallets/<int:pk>/', wallets_detail, name='wallets-detail'),
+    path('wallets/', WalletHandler.WalletView, name='wallets-overall'),
+    path('wallets/<int:pk>/', WalletHandler.WalletDetailView, name='wallets-detail'),
     path('accounts/', accounts_list, name='accounts-list'),
     path('accounts/<int:pk>/', accounts_detail, name='accounts-detail'),
     path('deposits/', deposit_list, name='deposit-list'),
