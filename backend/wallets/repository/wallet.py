@@ -1,11 +1,26 @@
 from django.db.models import QuerySet
+from django.contrib.auth.models import User
 
 from wallets.models import Wallet
 
 class WalletRepository:
+    """
+    Repository for the Wallet model.
+    
+    This repository contains the methods that should be used to perform actions on the Wallet model.
+
+    Methods:
+        create_wallet: A method that creates a wallet instance from the request data.
+        add_co_owners_to_wallet: A method that adds co-owners to the wallet.
+        erase_co_owners_from_wallet: A method that erases co-owners from the wallet.
+        get_all_wallets: A method that lists all wallets.
+        get_single_wallet: A method that gets the details of a wallet.
+        save_wallet: A method that saves the wallet instance.
+        delete_wallet: A method that deletes the wallet instance.
+    """
 
     @staticmethod
-    def create_wallet(request_data, owner):
+    def create_wallet(request_data: dict, owner: User) -> Wallet:
         """
         Create a wallet instance from the request data.
 
@@ -25,7 +40,7 @@ class WalletRepository:
         return wallet
 
     @staticmethod
-    def add_co_owners_to_wallet(wallet, co_owners):
+    def add_co_owners_to_wallet(wallet: Wallet, co_owners: list) -> None:
         """
         Add co-owners to the wallet.
 
@@ -41,7 +56,7 @@ class WalletRepository:
             raise e
         
     @staticmethod
-    def erase_co_owners_from_wallet(wallet):
+    def erase_co_owners_from_wallet(wallet: Wallet) -> None:
         """
         Erase co-owners from the wallet.
 
@@ -84,7 +99,7 @@ class WalletRepository:
         return wallet
 
     @staticmethod
-    def save_wallet(wallet):
+    def save_wallet(wallet: Wallet) -> None:
         """
         Save the wallet instance.
 
@@ -97,7 +112,7 @@ class WalletRepository:
             raise e
 
     @staticmethod
-    def delete_wallet(wallet):
+    def delete_wallet(wallet: Wallet) -> None:
         """
         Delete the wallet instance.
 

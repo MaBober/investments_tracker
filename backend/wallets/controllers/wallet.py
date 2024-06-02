@@ -1,13 +1,27 @@
+from django.db.models.query import QuerySet
+from django.contrib.auth.models import User
 from wallets.models import Wallet
 from wallets.repository import WalletRepository
 
 
 class WalletController:
+    """
+    Controller for the Wallet model.
+    
+    This controller contains all logic for the Wallet model. It uses the WalletRepository to access the database.
+    
+    Methods:
+        build_wallet: A method that creates a wallet instance from the request data by accessing the repository.
+        list_wallets: A method that lists all wallets by accessing the repository.
+        wallet_details: A method that gets the details of a wallet by accessing the repository.
+        update_wallet: A method that updates a wallet by accessing the repository.
+        delete_wallet: A method that deletes a wallet by accessing the repository.
+    """
 
     @staticmethod
-    def build_wallet(request_data: dict, owner):
+    def build_wallet(request_data: dict, owner: User) -> Wallet:
         """
-        Create a wallet instance from the request data.
+        Create a wallet instance from the request data by accessing the repository.
 
         Args:
             request_data (dict): The request data.
@@ -25,12 +39,15 @@ class WalletController:
         return wallet
 
     @staticmethod
-    def list_wallets(**parameters):
+    def list_wallets(**parameters: dict) -> QuerySet[Wallet]:
         """
-        List all wallets.
+        List all wallets by accessing the repository.
+
+        Args:
+            **parameters (dict): The query parameters to filter the wallets.
 
         Returns:
-            QuerySet: The wallets.
+            QuerySet: All listed wallets that match the query parameters.
         """
 
         wallets = WalletRepository.get_all_wallets(**parameters)
@@ -38,9 +55,9 @@ class WalletController:
         return wallets
 
     @staticmethod
-    def wallet_details(wallet_id: int):
+    def wallet_details(wallet_id: int) -> Wallet:
         """
-        Get the details of a wallet.
+        Get the details of a wallet by accessing the repository.
 
         Args:
             wallet_id (int): The wallet id.
@@ -54,9 +71,9 @@ class WalletController:
         return wallet
 
     @staticmethod
-    def update_wallet(wallet_id: int, request_data: dict):
+    def update_wallet(wallet_id: int, request_data: dict) -> Wallet:
         """
-        Update the details of a wallet.
+        Request to update a wallet by accessing the repository.
 
         Args:
             wallet_id (int): The wallet id.
@@ -82,14 +99,19 @@ class WalletController:
         return wallet
 
     @staticmethod
-    def delete_wallet(wallet_id: int):
+    def delete_wallet(wallet_id: int) -> None:
         """
-        Delete a wallet.
+        Request to delete a wallet by accessing the repository.
 
         Args:
             wallet_id (int): The wallet id.
+
+        Returns:
+            None
         """
 
         wallet = WalletRepository.get_single_wallet(wallet_id)
 
         WalletRepository.delete_wallet(wallet)
+
+        return None

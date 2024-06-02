@@ -4,13 +4,11 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError, FieldError
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseNotAllowed
-from django.views.decorators.csrf import csrf_exempt
-from django.views import View
 
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework.decorators import api_view
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse 
 from rest_framework import  permissions, viewsets
@@ -58,68 +56,6 @@ class UserDetail(RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsOwnerOrCoOwner]
 
-
-@api_view(['GET', 'POST'])
-def WalletView(request):
-    if request.method == 'GET':
-        return WalletHandler.list(request)
-
-    elif request.method == 'POST':
-        return WalletHandler.create(request)
-    else:
-        return HttpResponseNotAllowed(['GET', 'POST'])
-    
-@api_view(['GET', 'PATCH', 'DELETE'])
-def WalletDetailView(request, pk):
-    if request.method == 'GET':
-        return WalletHandler.detail(request, pk)
-    elif request.method == 'PATCH':
-        return WalletHandler.update(request, pk)
-    elif request.method == 'DELETE':
-        return WalletHandler.delete(request, pk)
-    else:
-        return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
-
-# class WalletViewSet(viewsets.ModelViewSet):
-#     """
-#     Viewset for Wallet model.
-    
-#     This viewset provides CRUD operations for the Wallet model.
-
-#     Attributes:
-#         queryset: A queryset that retrieves all the wallets from the database.
-#         permission_classes: A list of permission classes that determine who can access this view.
-
-#     Methods:
-#         perform_create: Creates a new wallet instance and associates it with the current user.
-#         get_serializer_class: Returns the appropriate serializer class based on the request method.
-#     """
-
-#     queryset = Wallet.objects.all()
-#     permission_classes = [permissions.IsAdminUser, IsOwnerOrCoOwner, permissions.IsAuthenticated, IsOwner]
-
-#     def get_permissions(self):
-#         if self.action == 'list':
-#             self.permission_classes = [permissions.IsAdminUser]
-#         elif self.action == 'create':
-#             self.permission_classes = [permissions.IsAuthenticated]
-#         elif self.action in ['retrieve', 'update']:
-#             self.permission_classes = [IsOwnerOrCoOwner]
-#         elif self.action == 'destroy':
-#             self.permission_classes = [IsOwner]
-#         return super(WalletViewSet, self).get_permissions()
-
-#     def perform_create(self, serializer):
-
-#         wallet = serializer.save(owner=self.request.user)
-#         wallet.save()
-
-#     def get_serializer_class(self):
-
-#         if self.request.method == 'POST' or self.request.method == 'PUT':
-#             return WalletCreateSerializer
-#         return WalletSerializer
-    
 
 class AccountViewSet(viewsets.ModelViewSet):
     """

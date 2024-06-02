@@ -11,12 +11,38 @@ from wallets.utilities import HandlersChecks
 
 
 class WalletHandler:
+    """
+    Handler for the Wallet model.
+
+    This handler contains the views for the Wallet model.
+    It specifies the methods that should be used to perform actions on the Wallet model,
+    when a request is made to the API.
+
+    Attributes:
+        model_class: The Wallet model class.
+
+    Methods:
+        WalletView: A method that handles the GET and POST requests for the Wallet model.
+            It serves request without specific instance.
+        WalletDetailView: A method that handles the GET, PATCH and DELETE requests for the Wallet model.
+            It serves request with specific instance.
+
+    """
 
     model_class = Wallet
 
     @staticmethod
     @api_view(['GET', 'POST'])
-    def WalletView(request):
+    def WalletView(request: Request) -> Response:
+        """
+        Handle the GET and POST requests for the Wallet model.
+
+        Args:
+            request (Request): The request.
+
+        Returns:
+            Response: The response for user.
+        """
         if request.method == 'GET':
 
             parameters = request.query_params.dict()
@@ -48,7 +74,17 @@ class WalletHandler:
             return HttpResponseNotAllowed(['GET', 'POST'])
         
     @api_view(['GET', 'PATCH', 'DELETE'])
-    def WalletDetailView(request, pk):
+    def WalletDetailView(request: Request, pk: int) -> Response:
+        """
+        Handle the GET, PATCH and DELETE requests for the Wallet model.
+
+        Args:
+            request (Request): The request.
+            pk (int): The id of the wallet instance.
+
+        Returns:
+            Response: The response for user.
+        """
 
         HandlersChecks.check_if_exists(WalletHandler.model_class, pk)
         HandlersChecks.check_ownership(request, WalletHandler.model_class, pk)

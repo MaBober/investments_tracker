@@ -5,17 +5,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 from .handlers import WalletHandler
 
-# wallets_list = views.WalletViewSet.as_view({
-#     'get': 'list'
-# })
-
-
-# wallets_detail = views.WalletViewSet.as_view({
-#     'get': 'retrieve',
-#     'put': 'update',
-#     'delete': 'destroy'
-# })
-
 accounts_list = views.AccountViewSet.as_view({
     'get': 'list',
     'post': 'create'
