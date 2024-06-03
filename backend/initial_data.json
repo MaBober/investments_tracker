@@ -1,0 +1,707 @@
+[
+{
+    "model": "wallets.country",
+    "pk": 1,
+    "fields": {
+        "name": "Poland",
+        "code": "PL",
+        "description": "",
+        "created_at": "2024-06-03T09:40:18.972Z",
+        "updated_at": "2024-06-03T09:40:18.972Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 2,
+    "fields": {
+        "name": "Germany",
+        "code": "DE",
+        "description": "",
+        "created_at": "2024-06-03T09:40:25.916Z",
+        "updated_at": "2024-06-03T09:40:25.916Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 3,
+    "fields": {
+        "name": "United States of America",
+        "code": "US",
+        "description": "",
+        "created_at": "2024-06-03T09:40:48.553Z",
+        "updated_at": "2024-06-03T09:40:48.553Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 4,
+    "fields": {
+        "name": "Great Britain",
+        "code": "GB",
+        "description": "",
+        "created_at": "2024-06-03T09:41:08.351Z",
+        "updated_at": "2024-06-03T09:41:08.351Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 5,
+    "fields": {
+        "name": "Japan",
+        "code": "JP",
+        "description": "",
+        "created_at": "2024-06-03T09:41:32.354Z",
+        "updated_at": "2024-06-03T09:41:32.354Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 6,
+    "fields": {
+        "name": "France",
+        "code": "FR",
+        "description": "",
+        "created_at": "2024-06-03T09:42:20.543Z",
+        "updated_at": "2024-06-03T09:42:20.543Z"
+    }
+},
+{
+    "model": "wallets.country",
+    "pk": 7,
+    "fields": {
+        "name": "Ireland",
+        "code": "IE",
+        "description": "",
+        "created_at": "2024-06-03T09:56:25.005Z",
+        "updated_at": "2024-06-03T09:56:25.005Z"
+    }
+},
+{
+    "model": "wallets.currency",
+    "pk": 1,
+    "fields": {
+        "name": "Polish Zloty",
+        "code": "PLN",
+        "symbol": "zl",
+        "description": "",
+        "created_at": "2024-06-03T09:41:49.166Z",
+        "updated_at": "2024-06-03T09:41:49.166Z",
+        "countries": [
+            1
+        ]
+    }
+},
+{
+    "model": "wallets.currency",
+    "pk": 2,
+    "fields": {
+        "name": "Euro",
+        "code": "EUR",
+        "symbol": "eur",
+        "description": "",
+        "created_at": "2024-06-03T09:42:37.066Z",
+        "updated_at": "2024-06-03T09:42:37.066Z",
+        "countries": [
+            2,
+            6
+        ]
+    }
+},
+{
+    "model": "wallets.currency",
+    "pk": 3,
+    "fields": {
+        "name": "United States dollar",
+        "code": "USD",
+        "symbol": "$",
+        "description": "",
+        "created_at": "2024-06-03T09:42:56.729Z",
+        "updated_at": "2024-06-03T09:42:56.730Z",
+        "countries": [
+            3
+        ]
+    }
+},
+{
+    "model": "wallets.currency",
+    "pk": 4,
+    "fields": {
+        "name": "Japanese yen",
+        "code": "JPY",
+        "symbol": "yen",
+        "description": "",
+        "created_at": "2024-06-03T09:52:57.113Z",
+        "updated_at": "2024-06-03T10:26:33.346Z",
+        "countries": [
+            5
+        ]
+    }
+},
+{
+    "model": "wallets.accounttype",
+    "pk": 1,
+    "fields": {
+        "name": "IKE brokerage account",
+        "description": "",
+        "created_at": "2024-06-03T09:39:13.359Z",
+        "updated_at": "2024-06-03T09:39:13.359Z"
+    }
+},
+{
+    "model": "wallets.accounttype",
+    "pk": 2,
+    "fields": {
+        "name": "Polish Treasury bonds account",
+        "description": "",
+        "created_at": "2024-06-03T09:39:17.913Z",
+        "updated_at": "2024-06-03T09:39:17.913Z"
+    }
+},
+{
+    "model": "wallets.accounttype",
+    "pk": 3,
+    "fields": {
+        "name": "Brokerage account",
+        "description": "",
+        "created_at": "2024-06-03T09:39:28.751Z",
+        "updated_at": "2024-06-03T09:39:28.751Z"
+    }
+},
+{
+    "model": "wallets.accounttype",
+    "pk": 4,
+    "fields": {
+        "name": "Bank account",
+        "description": "",
+        "created_at": "2024-06-03T09:39:41.141Z",
+        "updated_at": "2024-06-03T09:39:41.141Z"
+    }
+},
+{
+    "model": "wallets.accountinstitutiontype",
+    "pk": 1,
+    "fields": {
+        "name": "Brokerage house",
+        "description": "",
+        "created_at": "2024-06-03T09:38:35.507Z",
+        "updated_at": "2024-06-03T09:38:35.507Z"
+    }
+},
+{
+    "model": "wallets.accountinstitutiontype",
+    "pk": 2,
+    "fields": {
+        "name": "Bank",
+        "description": "",
+        "created_at": "2024-06-03T09:38:42.572Z",
+        "updated_at": "2024-06-03T09:38:42.572Z"
+    }
+},
+{
+    "model": "wallets.accountinstitution",
+    "pk": 1,
+    "fields": {
+        "name": "Dom Maklerski Banku Ochrony Srodowiska",
+        "type": 1,
+        "country": 1,
+        "description": "",
+        "created_at": "2024-06-03T09:46:42.359Z",
+        "updated_at": "2024-06-03T09:46:42.359Z"
+    }
+},
+{
+    "model": "wallets.accountinstitution",
+    "pk": 2,
+    "fields": {
+        "name": "PKO Bank Polski",
+        "type": 2,
+        "country": 1,
+        "description": "",
+        "created_at": "2024-06-03T09:46:52.461Z",
+        "updated_at": "2024-06-03T09:46:52.461Z"
+    }
+},
+{
+    "model": "wallets.assettype",
+    "pk": 1,
+    "fields": {
+        "name": "Share",
+        "description": "",
+        "created_at": "2024-06-03T09:48:22.793Z",
+        "updated_at": "2024-06-03T09:48:22.793Z"
+    }
+},
+{
+    "model": "wallets.assettype",
+    "pk": 2,
+    "fields": {
+        "name": "Cryptocurrency",
+        "description": "",
+        "created_at": "2024-06-03T09:48:37.634Z",
+        "updated_at": "2024-06-03T09:48:37.634Z"
+    }
+},
+{
+    "model": "wallets.assettype",
+    "pk": 3,
+    "fields": {
+        "name": "Treasury Bonds",
+        "description": "",
+        "created_at": "2024-06-03T09:48:46.941Z",
+        "updated_at": "2024-06-03T10:18:22.560Z"
+    }
+},
+{
+    "model": "wallets.assettype",
+    "pk": 4,
+    "fields": {
+        "name": "Precious metals",
+        "description": "",
+        "created_at": "2024-06-03T09:49:26.841Z",
+        "updated_at": "2024-06-03T09:49:26.841Z"
+    }
+},
+{
+    "model": "wallets.exchangemarket",
+    "pk": 1,
+    "fields": {
+        "name": "Gielda Papierow Wartosciowych w Warszawie",
+        "code": "GPW",
+        "description": "",
+        "prices_currency": 1,
+        "country": 1,
+        "created_at": "2024-06-03T09:50:16.880Z",
+        "updated_at": "2024-06-03T09:50:16.880Z"
+    }
+},
+{
+    "model": "wallets.exchangemarket",
+    "pk": 2,
+    "fields": {
+        "name": "Borse Frankfurt",
+        "code": "XETRA",
+        "description": "",
+        "prices_currency": 2,
+        "country": 2,
+        "created_at": "2024-06-03T09:50:28.832Z",
+        "updated_at": "2024-06-03T09:50:28.832Z"
+    }
+},
+{
+    "model": "wallets.exchangemarket",
+    "pk": 3,
+    "fields": {
+        "name": "New York Stock Exchange",
+        "code": "NYSE",
+        "description": "",
+        "prices_currency": 3,
+        "country": 3,
+        "created_at": "2024-06-03T09:50:49.779Z",
+        "updated_at": "2024-06-03T09:50:49.779Z"
+    }
+},
+{
+    "model": "wallets.exchangemarket",
+    "pk": 4,
+    "fields": {
+        "name": "Tokyo Stock Exchange",
+        "code": "TYO",
+        "description": "",
+        "prices_currency": 4,
+        "country": 5,
+        "created_at": "2024-06-03T09:54:05.018Z",
+        "updated_at": "2024-06-03T09:54:05.018Z"
+    }
+},
+{
+    "model": "wallets.marketasset",
+    "pk": 1,
+    "fields": {
+        "name": "Vanguard FTSE All-World UCITS ETF - (USD) Accumulating",
+        "code": "VWCE",
+        "is_etf": true,
+        "is_share": false,
+        "description": "",
+        "exchange_market": 2,
+        "price_currency": 2,
+        "created_at": "2024-06-03T09:57:09.648Z",
+        "updated_at": "2024-06-03T10:01:49.474Z"
+    }
+},
+{
+    "model": "wallets.marketasset",
+    "pk": 2,
+    "fields": {
+        "name": "Vanguard FTSE All-World UCITS ETF - (USD) Distributing",
+        "code": "VGWL",
+        "is_etf": true,
+        "is_share": false,
+        "description": "",
+        "exchange_market": 2,
+        "price_currency": 2,
+        "created_at": "2024-06-03T09:58:40.879Z",
+        "updated_at": "2024-06-03T10:01:26.989Z"
+    }
+},
+{
+    "model": "wallets.marketasset",
+    "pk": 3,
+    "fields": {
+        "name": "General Motors",
+        "code": "GM",
+        "is_etf": false,
+        "is_share": true,
+        "description": "",
+        "exchange_market": 3,
+        "price_currency": 3,
+        "created_at": "2024-06-03T10:21:40.425Z",
+        "updated_at": "2024-06-03T10:21:40.425Z"
+    }
+},
+{
+    "model": "wallets.assettypeassociation",
+    "pk": 1,
+    "fields": {
+        "asset": 3,
+        "asset_type": 1,
+        "percentage": "1.00",
+        "created_at": "2024-06-03T10:21:40.438Z",
+        "updated_at": "2024-06-03T10:21:40.439Z"
+    }
+},
+{
+    "model": "wallets.marketshare",
+    "pk": 3,
+    "fields": {
+        "company_country": 3
+    }
+},
+{
+    "model": "wallets.marketetf",
+    "pk": 1,
+    "fields": {
+        "fund_country": 7,
+        "dividend_distribution": false,
+        "replication_method": "Sampling"
+    }
+},
+{
+    "model": "wallets.marketetf",
+    "pk": 2,
+    "fields": {
+        "fund_country": 7,
+        "dividend_distribution": true,
+        "replication_method": "Sampling"
+    }
+},
+{
+    "model": "wallets.retailbonds",
+    "pk": 1,
+    "fields": {
+        "name": "Obligacje 3-miesieczne OTS",
+        "code": "OTS0824",
+        "description": "STALOPROCENTOWE",
+        "nominal_value": "100.00",
+        "duration": 3,
+        "duration_unit": "M",
+        "price_currency": 1,
+        "asset_type": 3,
+        "initial_interest_rate": "3.000",
+        "is_intrest_rate_fixed": true,
+        "is_first_year_interest_fixed": true,
+        "premature_withdrawal_fee": "0.000",
+        "created_at": "2024-06-03T10:18:27.423Z",
+        "updated_at": "2024-06-03T10:18:27.423Z"
+    }
+},
+{
+    "model": "wallets.retailbonds",
+    "pk": 2,
+    "fields": {
+        "name": "Obligacje roczne ROR",
+        "code": "ROR0525",
+        "description": "ZMIENNOPROCENTOWE",
+        "nominal_value": "100.00",
+        "duration": 1,
+        "duration_unit": "Y",
+        "price_currency": 1,
+        "asset_type": 3,
+        "initial_interest_rate": "6.050",
+        "is_intrest_rate_fixed": true,
+        "is_first_year_interest_fixed": true,
+        "premature_withdrawal_fee": "0.500",
+        "created_at": "2024-06-03T10:19:53.340Z",
+        "updated_at": "2024-06-03T10:19:53.340Z"
+    }
+},
+{
+    "model": "wallets.treasurybonds",
+    "pk": 1,
+    "fields": {
+        "issuer_country": 1
+    }
+},
+{
+    "model": "wallets.treasurybonds",
+    "pk": 2,
+    "fields": {
+        "issuer_country": 1
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 1,
+    "fields": {
+        "app_label": "wallets",
+        "model": "accountinstitutiontype"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 2,
+    "fields": {
+        "app_label": "wallets",
+        "model": "accounttype"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 3,
+    "fields": {
+        "app_label": "wallets",
+        "model": "assettype"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 4,
+    "fields": {
+        "app_label": "wallets",
+        "model": "country"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 5,
+    "fields": {
+        "app_label": "wallets",
+        "model": "accountinstitution"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 6,
+    "fields": {
+        "app_label": "wallets",
+        "model": "assettypeassociation"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 7,
+    "fields": {
+        "app_label": "wallets",
+        "model": "currency"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 8,
+    "fields": {
+        "app_label": "wallets",
+        "model": "account"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 9,
+    "fields": {
+        "app_label": "wallets",
+        "model": "deposit"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 10,
+    "fields": {
+        "app_label": "wallets",
+        "model": "exchangemarket"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 11,
+    "fields": {
+        "app_label": "wallets",
+        "model": "marketasset"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 12,
+    "fields": {
+        "app_label": "wallets",
+        "model": "wallet"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 13,
+    "fields": {
+        "app_label": "wallets",
+        "model": "withdrawal"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 14,
+    "fields": {
+        "app_label": "wallets",
+        "model": "marketetf"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 15,
+    "fields": {
+        "app_label": "wallets",
+        "model": "marketshare"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 16,
+    "fields": {
+        "app_label": "wallets",
+        "model": "assetprice"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 17,
+    "fields": {
+        "app_label": "wallets",
+        "model": "userasset"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 18,
+    "fields": {
+        "app_label": "wallets",
+        "model": "accountcurrencybalance"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 19,
+    "fields": {
+        "app_label": "wallets",
+        "model": "retailbonds"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 20,
+    "fields": {
+        "app_label": "wallets",
+        "model": "treasurybonds"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 21,
+    "fields": {
+        "app_label": "wallets",
+        "model": "treasurybondstransaction"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 22,
+    "fields": {
+        "app_label": "wallets",
+        "model": "marketassettransaction"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 23,
+    "fields": {
+        "app_label": "wallets",
+        "model": "usertreasurybonds"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 24,
+    "fields": {
+        "app_label": "wallets",
+        "model": "currencyprice"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 25,
+    "fields": {
+        "app_label": "admin",
+        "model": "logentry"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 26,
+    "fields": {
+        "app_label": "auth",
+        "model": "permission"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 27,
+    "fields": {
+        "app_label": "auth",
+        "model": "group"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 28,
+    "fields": {
+        "app_label": "auth",
+        "model": "user"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 29,
+    "fields": {
+        "app_label": "contenttypes",
+        "model": "contenttype"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 30,
+    "fields": {
+        "app_label": "sessions",
+        "model": "session"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "3uaiiz2024kg84lddf9jz2izfhoz7k46",
+    "fields": {
+        "session_data": ".eJxVjE0OwiAYBe_C2hCggMWle89A-H6QqoGktCvj3Q1JF7p9M_PeIqZ9K3HvvMaFxEVocfrdIOGT6wD0SPXeJLa6rQvIociDdnlrxK_r4f4dlNTLqFl5RkRFGQJOpAB4coiZHVgKs_dovHXBBgpozDkkTaAdec7gZtTi8wUmxTkr:1sDPJq:5qqVbJtElonPKLuNbYI1tqR2BDKosnxkTiHXfP_oGIE",
+        "expire_date": "2024-06-15T14:02:50.793Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "q1jeedadpk0cc5238m6mgs9bbkbbcgjn",
+    "fields": {
+        "session_data": ".eJxVjE0OwiAYBe_C2hCggMWle89A-H6QqoGktCvj3Q1JF7p9M_PeIqZ9K3HvvMaFxEVocfrdIOGT6wD0SPXeJLa6rQvIociDdnlrxK_r4f4dlNTLqFl5RkRFGQJOpAB4coiZHVgKs_dovHXBBgpozDkkTaAdec7gZtTi8wUmxTkr:1sDpHe:74MUzqpPPKBajgI7AbNUHB1t_stmwM-wC31XKRtRtv4",
+        "expire_date": "2024-06-16T17:46:18.407Z"
+    }
+}
+]
