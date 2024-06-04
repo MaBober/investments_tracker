@@ -1,3 +1,6 @@
+
+from django.http import Http404
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -5,7 +8,6 @@ from rest_framework.views import APIView
 from wallets.controllers import WalletController
 from wallets.serializers.wallet import WalletCreateSerializer, WalletSerializer
 from wallets.permissions import IsOwnerOrCoOwner, IsOwner
-
 
 
 class WalletView(APIView):
@@ -44,31 +46,41 @@ class WalletDetailView(APIView):
 
         return super(WalletDetailView, self).get_permissions()
 
-    def get(self, request: Request, pk: int) -> Response:
+    def get_wallet_and_check_permissions(self, request, pk):
 
         wallet = WalletController.wallet_details(pk)
-        self.check_object_permissions(request, wallet)
+
+        if not wallet:
+            raise Http404('Wallet not found.')
         
+        self.check_object_permissions(request, wallet)
+
+        return wallet
+    
+    def get(self, request: Request, pk: int) -> Response:
+
+        wallet = self.get_wallet_and_check_permissions(request, pk)
         return Response(WalletSerializer(wallet).data, status=200)
         
     def patch(self, request: Request, pk: int) -> Response:
-         
+
+        self.get_wallet_and_check_permissions(request, pk)
         serializer = WalletCreateSerializer(data=request.data, context={'request': request}, partial=True)
 
         if serializer.is_valid():
             wallet = WalletController.update_wallet(pk, request.data)
-            self.check_object_permissions(request, wallet)
             return Response(WalletSerializer(wallet).data, status=200)
         
         return Response(serializer.errors, status=400)
         
     def delete(self, request: Request, pk: int) -> Response:
 
-        wallet = WalletController.wallet_details(pk)
-        self.check_object_permissions(request, wallet)
+        self.get_wallet_and_check_permissions(request, pk)
         WalletController.delete_wallet(pk)
 
         return Response({'id': pk, 'message': 'Wallet deleted.'}, status=200)
+
+
         
 
         

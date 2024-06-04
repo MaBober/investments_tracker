@@ -1,5 +1,5 @@
 from django.db.models import QuerySet
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 
 from django.contrib.auth.models import User
 
@@ -86,7 +86,10 @@ class WalletRepository:
             Wallet: The wallet instance.
         """
 
-        wallet = Wallet.objects.get(id=wallet_id)
+        try:
+            wallet = Wallet.objects.get(id=wallet_id)
+        except ObjectDoesNotExist:
+            wallet = None
 
         return wallet
 
