@@ -24,12 +24,9 @@ class WalletRepository:
         Returns:
             Wallet: The wallet instance.
         """
-        try:
-            wallet = Wallet.objects.create(owner=owner, **request_data)            
 
-        except Exception as e:
-            raise e
-        
+        wallet = Wallet.objects.create(owner=owner, **request_data)            
+
         return wallet
 
     @staticmethod
@@ -41,13 +38,10 @@ class WalletRepository:
             wallet (Wallet): The wallet instance.
             co_owners (list): The co-owners of the wallet.
         """
-        try:
-            wallet.co_owners.clear()
-            wallet.co_owners.add(*co_owners)
-
-        except Exception as e:
-            raise e
         
+        wallet.co_owners.clear()
+        wallet.co_owners.add(*co_owners)
+
     @staticmethod
     def erase_co_owners_from_wallet(wallet: Wallet) -> None:
         """
@@ -56,12 +50,9 @@ class WalletRepository:
         Args:
             wallet (Wallet): The wallet instance.
         """
-        try:
-            wallet.co_owners.clear()
 
-        except Exception as e:
-            raise e
-        
+        wallet.co_owners.clear()
+
     @staticmethod
     def get_all_wallets(**parameters) -> QuerySet[Wallet]:
         """
@@ -107,10 +98,8 @@ class WalletRepository:
         Args:
             wallet (Wallet): The wallet instance.
         """
-        try:
-            wallet.save()
-        except Exception as e:
-            raise e
+
+        wallet.save()
 
     @staticmethod
     def delete_wallet(wallet: Wallet) -> None:
@@ -120,8 +109,7 @@ class WalletRepository:
         Args:
             wallet (Wallet): The wallet instance.
         """
-        try:
-            wallet.delete()
-        except Exception as e:
-            raise e
+
+        wallet.delete()
+
             

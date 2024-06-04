@@ -27,12 +27,8 @@ class WalletView(APIView):
     
             if serializer.is_valid():
     
-                try:
-                    wallet = WalletController.build_wallet(request.data, request.user)
-                    return Response(WalletCreateSerializer(wallet).data, status=201)
-                
-                except Exception as e:
-                    return Response({'error': str(e)}, status=500)
+                wallet = WalletController.build_wallet(request.data, request.user)
+                return Response(WalletCreateSerializer(wallet).data, status=201)
             
             return Response(serializer.errors, status=400)
 
@@ -44,35 +40,26 @@ class WalletDetailView(APIView):
 
     def get(self, request: Request, pk: int) -> Response:
 
-        try:
-            wallet = WalletController.wallet_details(pk)
-            return Response(WalletSerializer(wallet).data, status=200)
-        
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+        wallet = WalletController.wallet_details(pk)
+        return Response(WalletSerializer(wallet).data, status=200)
         
     def patch(self, request: Request, pk: int) -> Response:
          
-        try:
-            serializer = WalletCreateSerializer(data=request.data, context={'request': request}, partial=True)
+        serializer = WalletCreateSerializer(data=request.data, context={'request': request}, partial=True)
 
-            if serializer.is_valid():
-                wallet = WalletController.update_wallet(pk, request.data)
-                return Response(WalletSerializer(wallet).data, status=200)
-            
-            return Response(serializer.errors, status=400)
+        if serializer.is_valid():
+            wallet = WalletController.update_wallet(pk, request.data)
+            return Response(WalletSerializer(wallet).data, status=200)
         
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+        return Response(serializer.errors, status=400)
+
         
     def delete(self, request: Request, pk: int) -> Response:
 
-        try:
-            wallet = WalletController.delete_wallet(pk)
-            return Response({'id': pk, 'message': 'Wallet deleted.'}, status=200)
+        WalletController.delete_wallet(pk)
+        return Response({'id': pk, 'message': 'Wallet deleted.'}, status=200)
         
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+
         
 
 
