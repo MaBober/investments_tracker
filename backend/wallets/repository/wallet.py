@@ -10,15 +10,6 @@ class WalletRepository:
     Repository for the Wallet model.
     
     This repository contains the methods that should be used to perform actions on the Wallet model.
-
-    Methods:
-        create_wallet: A method that creates a wallet instance from the request data.
-        add_co_owners_to_wallet: A method that adds co-owners to the wallet.
-        erase_co_owners_from_wallet: A method that erases co-owners from the wallet.
-        get_all_wallets: A method that lists all wallets.
-        get_single_wallet: A method that gets the details of a wallet.
-        save_wallet: A method that saves the wallet instance.
-        delete_wallet: A method that deletes the wallet instance.
     """
 
     @staticmethod

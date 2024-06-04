@@ -12,13 +12,6 @@ class WalletController:
     Controller for the Wallet model.
     
     This controller contains all logic for the Wallet model. It uses the WalletRepository to access the database.
-    
-    Methods:
-        build_wallet: A method that creates a wallet instance from the request data by accessing the repository.
-        list_wallets: A method that lists all wallets by accessing the repository.
-        wallet_details: A method that gets the details of a wallet by accessing the repository.
-        update_wallet: A method that updates a wallet by accessing the repository.
-        delete_wallet: A method that deletes a wallet by accessing the repository.
     """
 
     @staticmethod
