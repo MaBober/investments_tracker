@@ -40,8 +40,7 @@ class WalletController:
         List all wallets by accessing the repository.
 
         Args:
-            user (User): The user requesting the wallets.
-            **parameters (dict): The query parameters to filter the wallets.
+            request (Request): The request object.
 
         Returns:
             QuerySet: All listed wallets that match the query parameters.
@@ -51,9 +50,15 @@ class WalletController:
         parameters = request.query_params.dict()
 
         if not request.user.is_staff:
-            parameters['owner_id'] = request.user.id
+            parameters['user_id'] = request.user.id
 
-        wallets = WalletRepository.get_all_wallets(**parameters)
+        wallets = WalletRepository.get_all_wallets(
+            user_id=parameters.get('user_id'),
+            co_owner_id=parameters.get('co_owner_id'),
+            owner_id=parameters.get('owner_id'),
+            created_before=parameters.get('created_before'),
+            created_after=parameters.get('created_after')
+        )
 
         return wallets
 

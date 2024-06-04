@@ -1,6 +1,8 @@
-from django.db.models import QuerySet
-from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
+from datetime import datetime
+from typing import List
 
+from django.db.models import QuerySet, Q
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 from wallets.models import Wallet
@@ -54,23 +56,35 @@ class WalletRepository:
         wallet.co_owners.clear()
 
     @staticmethod
-    def get_all_wallets(**parameters) -> QuerySet[Wallet]:
+    def get_all_wallets(owner_id: List[int], co_owner_id: List[int], created_before: datetime, created_after:datetime, user_id) -> QuerySet[Wallet]:
         """
-        List all wallets.
+        List all wallets. 
+
+        Args:
+            owner_id (int): The owner id.
+            created_before (datetime): The date before which the wallets were created.
+            created_after (datetime): The date after which the wallets were created.
+            user_id (int): The id of user sending  equest.
 
         Returns:
-            QuerySet: The wallets.
+            QuerySet: The filltred wallets.
         """
 
-        valid_parameters = {}
-        for key in parameters:
-            try:
-                Wallet._meta.get_field(key)
-                valid_parameters[key] = parameters[key]
-            except FieldDoesNotExist:
-                continue
+        filters = {}
 
-        all_wallets = Wallet.objects.filter(**valid_parameters)
+        if owner_id:
+            filters['owner_id__in'] = owner_id
+        if co_owner_id:
+            filters['co_owners__in'] = co_owner_id
+        if created_before:
+            filters['created_at__lt'] = created_before
+        if created_after:
+            filters['created_at__gt'] = created_after
+
+        all_wallets = Wallet.objects.filter(**filters)
+
+        if user_id:
+            all_wallets = all_wallets.filter(Q(owner_id=user_id) | Q(co_owners__in=[user_id]))
 
         return all_wallets
     

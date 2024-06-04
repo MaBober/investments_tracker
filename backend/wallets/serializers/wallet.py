@@ -3,8 +3,9 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CharField
 
-from wallets.models import Wallet, Account, TreasuryBonds, UserTreasuryBonds
+from wallets.models import Wallet
 from wallets.serializers.assets import UserSimpleTreasuryBondsSerializer
+from wallets.serializers.generic import CommaSeparatedIntegerListField
 
 
 class WalletSerializer(serializers.ModelSerializer):
@@ -77,5 +78,25 @@ class WalletCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Wallet with this Owner and Name already exists.")
 
         return value
+    
+
+class WalletListParametersSerializer(serializers.Serializer):
+    """
+    Serializer for the Wallet list filtring parameters.
+
+    This serializer is used to validate the query parameters for the Wallet list view.
+
+    Attributes:
+        owner_id: A CommaSeparatedIntegerListField that represents the owners ids.
+        co_owner_id: A CommaSeparatedIntegerListField that represents the co-owners ids.
+        created_before: A DateTimeField that represents the date before which the wallets were created.
+        created_after: A DateTimeField that represents the date after which the wallets were created.
+
+    """
+
+    owner_id = CommaSeparatedIntegerListField(child=serializers.IntegerField(), required=False)
+    co_owner_id = CommaSeparatedIntegerListField(child=serializers.IntegerField(), required=False)
+    created_before = serializers.DateTimeField(required=False)
+    created_after = serializers.DateTimeField(required=False)
     
 

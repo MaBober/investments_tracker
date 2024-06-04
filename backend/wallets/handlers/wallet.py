@@ -6,7 +6,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from wallets.controllers import WalletController
-from wallets.serializers.wallet import WalletCreateSerializer, WalletSerializer
+from wallets.serializers.wallet import WalletCreateSerializer, WalletSerializer, WalletListParametersSerializer
 from wallets.permissions import IsOwnerOrCoOwner, IsOwner
 
 
@@ -16,6 +16,9 @@ class WalletView(APIView):
     """
 
     def get(self, request: Request) -> Response:
+            
+            request_parameters_serializer = WalletListParametersSerializer(data=request.query_params)
+            request_parameters_serializer.is_valid(raise_exception=True)
 
             wallets = WalletController.list_wallets(request)
             return Response(WalletSerializer(wallets, many=True).data, status=200)
