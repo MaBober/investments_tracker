@@ -18,7 +18,6 @@ from .serializers import UserSerializer, AccountSerializer, AccountCreateSeriali
 from .serializers import UserDetailedAssetSerializer, UserSimpleAssetSerializer, UserDetailedTreasuryBondsSerializer, UserSimpleTreasuryBondsSerializer
 from .permissions import IsOwnerOrCoOwner, IsOwner
 
-from .handlers import WalletHandler
     
 @api_view(['GET'])
 def api_root(request, format=None):
