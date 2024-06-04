@@ -7,13 +7,11 @@ class IsOwnerOrCoOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """
-        Return True if permission is granted to the wallet owner or is on the co-owner list.
+        Return True if permission is granted to the object owner or co-owners.
         """
-        try:
-            return obj.owner == request.user or request.user in obj.co_owners.all()
-        except AttributeError:
-            return obj.wallet.owner == request.user or request.user in obj.wallet.co_owners.all()
-           
+
+        return obj.owner == request.user or request.user in obj.co_owners.all() or request.user.is_staff
+
     
 class IsOwner(permissions.BasePermission):
     """
@@ -22,11 +20,10 @@ class IsOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """
-        Return True if permission is granted to the wallet owner.
+        Return True if permission is granted to the object owner.
         """
-        try:
-            return obj.owner == request.user
-        except AttributeError:
-            return obj.user == request.user
+
+        return obj.owner == request.user
+
     
     

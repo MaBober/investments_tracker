@@ -1,14 +1,11 @@
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from django.http import HttpResponseNotAllowed
-
-from wallets.models import Wallet
 from wallets.controllers import WalletController
 from wallets.serializers.wallet import WalletCreateSerializer, WalletSerializer
-from wallets.utilities import HandlersChecks
+from wallets.permissions import IsOwnerOrCoOwner, IsOwner
+
 
 
 class WalletView(APIView):
@@ -37,10 +34,21 @@ class WalletDetailView(APIView):
     """
     Handle the GET, PATCH and DELETE requests for the Wallet model.
     """
+    
+    def get_permissions(self):
+
+        if self.request.method == 'DELETE':
+            self.permission_classes = [IsOwner]
+        else:
+            self.permission_classes = [IsOwnerOrCoOwner]    
+
+        return super(WalletDetailView, self).get_permissions()
 
     def get(self, request: Request, pk: int) -> Response:
 
         wallet = WalletController.wallet_details(pk)
+        self.check_object_permissions(request, wallet)
+        
         return Response(WalletSerializer(wallet).data, status=200)
         
     def patch(self, request: Request, pk: int) -> Response:
@@ -49,14 +57,17 @@ class WalletDetailView(APIView):
 
         if serializer.is_valid():
             wallet = WalletController.update_wallet(pk, request.data)
+            self.check_object_permissions(request, wallet)
             return Response(WalletSerializer(wallet).data, status=200)
         
         return Response(serializer.errors, status=400)
-
         
     def delete(self, request: Request, pk: int) -> Response:
 
+        wallet = WalletController.wallet_details(pk)
+        self.check_object_permissions(request, wallet)
         WalletController.delete_wallet(pk)
+
         return Response({'id': pk, 'message': 'Wallet deleted.'}, status=200)
         
 
