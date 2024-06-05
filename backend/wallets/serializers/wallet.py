@@ -24,12 +24,10 @@ class WalletSerializer(serializers.ModelSerializer):
     owner_id = CharField(source='owner.id', read_only=True)
     co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
     current_value = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-    bonds = UserSimpleTreasuryBondsSerializer(many=True, read_only=True)
-
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at', 'current_value', 'bonds']
+        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at', 'current_value',]
 
 
 

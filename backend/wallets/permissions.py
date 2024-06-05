@@ -10,8 +10,7 @@ class IsOwnerOrCoOwner(permissions.BasePermission):
         Return True if permission is granted to the object owner or co-owners.
         """
 
-        return obj.owner == request.user or request.user in obj.co_owners.all() or request.user.is_staff
-
+        return int(obj['owner_id']) == request.user.id or request.user.id in obj['co_owners'] or request.user.is_staff
     
 class IsOwner(permissions.BasePermission):
     """
@@ -23,7 +22,7 @@ class IsOwner(permissions.BasePermission):
         Return True if permission is granted to the object owner.
         """
 
-        return obj.owner == request.user
+        return int(obj['owner_id'])  == request.user.id
 
     
     

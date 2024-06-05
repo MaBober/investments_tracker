@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 
 from django.db.models import QuerySet, Q
-from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 from wallets.models import Wallet

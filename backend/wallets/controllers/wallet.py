@@ -1,10 +1,17 @@
-from django.db.models.query import QuerySet
-from django.contrib.auth.models import User
-
-from rest_framework.request import Request
-
 from wallets.models import Wallet
 from wallets.repository import WalletRepository
+from wallets.schema import (
+    BuildWalletRequest,
+    BuildWalletResponse,
+    ListWalletsRequest,
+    ListWalletsResponse,
+    WalletDetailsRequest,
+    WalletDetailsResponse,
+    DeleteWalletResponse,
+    DeleteWalletRequest,
+    UpdateWalletRequest,
+    UpdateWalletResponse
+)
 
 
 class WalletController:
@@ -15,55 +22,61 @@ class WalletController:
     """
 
     @staticmethod
-    def build_wallet(request_data: dict, owner: User) -> Wallet:
+    def build_wallet(request: BuildWalletRequest) -> BuildWalletResponse:
         """
         Create a wallet instance from the request data by accessing the repository.
 
         Args:
-            request_data (dict): The request data.
-            owner (User): The owner of the wallet.
+            request (BuildWalletRequest): The request object.
 
         Returns:
-            Wallet: The wallet instance.
+            BuildWalletResponse: The response object.
         """
-        co_owners = request_data.pop('co_owners', [])
-        wallet = WalletRepository.create_wallet(request_data, owner)
+        co_owners = request.data.pop('co_owners', [])
+        wallet = WalletRepository.create_wallet(
+            request_data=request.data,
+            owner=request.owner
+        )
 
         if co_owners:
-            WalletRepository.add_co_owners_to_wallet(wallet, co_owners)
+            WalletRepository.add_co_owners_to_wallet(
+                wallet=wallet,
+                co_owners=co_owners
+            )
+
+        response = BuildWalletResponse(wallet)
             
-        return wallet
+        return response
 
     @staticmethod
-    def list_wallets(request: Request) -> QuerySet[Wallet]:
+    def list_wallets(request: ListWalletsRequest) -> ListWalletsResponse:
         """
         List all wallets by accessing the repository.
 
         Args:
-            request (Request): The request object.
+            request (ListWalletsRequest): The request object.
 
         Returns:
-            QuerySet: All listed wallets that match the query parameters.
-            
+            ListWalletsResponse: The response object.
         """
 
-        parameters = request.query_params.dict()
-
         if not request.user.is_staff:
-            parameters['user_id'] = request.user.id
+            request.parameters['user_id'] = request.user.id
 
         wallets = WalletRepository.get_all_wallets(
-            user_id=parameters.get('user_id'),
-            co_owner_id=parameters.get('co_owner_id'),
-            owner_id=parameters.get('owner_id'),
-            created_before=parameters.get('created_before'),
-            created_after=parameters.get('created_after')
+            user_id=request.parameters.get('user_id'),
+            co_owner_id=request.parameters.get('co_owner_id'),
+            owner_id=request.parameters.get('owner_id'),
+            created_before=request.parameters.get('created_before'),
+            created_after=request.parameters.get('created_after')
         )
 
-        return wallets
+        response = ListWalletsResponse(wallets)
+
+        return response
 
     @staticmethod
-    def wallet_details(wallet_id: int) -> Wallet:
+    def wallet_details(request: WalletDetailsRequest) -> Wallet:
         """
         Get the details of a wallet by accessing the repository.
 
@@ -74,12 +87,13 @@ class WalletController:
             Wallet: The wallet instance.
         """
 
-        wallet = WalletRepository.get_single_wallet(wallet_id)
+        wallet = WalletRepository.get_single_wallet(request.pk)
+        response = WalletDetailsResponse(wallet)
 
-        return wallet
+        return response
 
     @staticmethod
-    def update_wallet(wallet_id: int, request_data: dict) -> Wallet:
+    def update_wallet(request: UpdateWalletRequest) -> UpdateWalletResponse:
         """
         Request to update a wallet by accessing the repository.
 
@@ -90,10 +104,10 @@ class WalletController:
             Wallet: The wallet instance.
         """
 
-        co_owners = request_data.pop('co_owners', [])
-        wallet = WalletRepository.get_single_wallet(wallet_id)
+        co_owners = request._data.pop('co_owners', [])
+        wallet = WalletRepository.get_single_wallet(request.pk)
 
-        for key, value in request_data.items():
+        for key, value in request.data.items():
             setattr(wallet, key, value)
 
         WalletRepository.save_wallet(wallet)
@@ -104,10 +118,12 @@ class WalletController:
         else:
             WalletRepository.erase_co_owners_from_wallet(wallet)
 
-        return wallet
+        response = UpdateWalletResponse(wallet)
+
+        return response
 
     @staticmethod
-    def delete_wallet(wallet_id: int) -> None:
+    def delete_wallet(request: DeleteWalletRequest) -> DeleteWalletResponse:
         """
         Request to delete a wallet by accessing the repository.
 
@@ -118,8 +134,9 @@ class WalletController:
             None
         """
 
-        wallet = WalletRepository.get_single_wallet(wallet_id)
-
+        wallet = WalletRepository.get_single_wallet(request.pk)
         WalletRepository.delete_wallet(wallet)
 
-        return None
+        response = DeleteWalletResponse()
+
+        return response
