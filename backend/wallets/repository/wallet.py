@@ -7,10 +7,11 @@ from django.contrib.auth.models import User
 
 from wallets.models import Wallet
 
+
 class WalletRepository:
     """
     Repository for the Wallet model.
-    
+
     This repository contains the methods that should be used to perform actions on the Wallet model.
     """
 
@@ -27,7 +28,7 @@ class WalletRepository:
             Wallet: The wallet instance.
         """
 
-        wallet = Wallet.objects.create(owner=owner, **request_data)            
+        wallet = Wallet.objects.create(owner=owner, **request_data)
 
         return wallet
 
@@ -40,7 +41,7 @@ class WalletRepository:
             wallet (Wallet): The wallet instance.
             co_owners (list): The co-owners of the wallet.
         """
-        
+
         wallet.co_owners.clear()
         wallet.co_owners.add(*co_owners)
 
@@ -56,9 +57,15 @@ class WalletRepository:
         wallet.co_owners.clear()
 
     @staticmethod
-    def get_all_wallets(owner_id: List[int], co_owner_id: List[int], created_before: datetime, created_after:datetime, user_id) -> QuerySet[Wallet]:
+    def get_all_wallets(
+        owner_id: List[int],
+        co_owner_id: List[int],
+        created_before: datetime,
+        created_after: datetime,
+        user_id,
+    ) -> QuerySet[Wallet]:
         """
-        List all wallets. 
+        List all wallets.
 
         Args:
             owner_id (int): The owner id.
@@ -73,21 +80,23 @@ class WalletRepository:
         filters = {}
 
         if owner_id:
-            filters['owner_id__in'] = owner_id
+            filters["owner_id__in"] = owner_id
         if co_owner_id:
-            filters['co_owners__in'] = co_owner_id
+            filters["co_owners__in"] = co_owner_id
         if created_before:
-            filters['created_at__lt'] = created_before
+            filters["created_at__lt"] = created_before
         if created_after:
-            filters['created_at__gt'] = created_after
+            filters["created_at__gt"] = created_after
 
         all_wallets = Wallet.objects.filter(**filters)
 
         if user_id:
-            all_wallets = all_wallets.filter(Q(owner_id=user_id) | Q(co_owners__in=[user_id]))
+            all_wallets = all_wallets.filter(
+                Q(owner_id=user_id) | Q(co_owners__in=[user_id])
+            )
 
         return all_wallets
-    
+
     @staticmethod
     def get_single_wallet(wallet_id: int) -> Wallet:
         """
@@ -128,5 +137,3 @@ class WalletRepository:
         """
 
         wallet.delete()
-
-            

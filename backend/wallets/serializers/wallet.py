@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.fields import CharField
 
 from wallets.models import Wallet
-from wallets.serializers.assets import UserSimpleTreasuryBondsSerializer
 from wallets.serializers.generic import CommaSeparatedIntegerListField
 
 
@@ -21,14 +20,26 @@ class WalletSerializer(serializers.ModelSerializer):
         co_owners: A UserSerializer instance that represents the co-owner of the wallet.
     """
 
-    owner_id = CharField(source='owner.id', read_only=True)
-    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
-    current_value = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    owner_id = CharField(source="owner.id", read_only=True)
+    co_owners = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=User.objects.all(), required=False
+    )
+    current_value = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = Wallet
-        fields = ['id', 'owner_id', 'co_owners', 'name', 'description', 'created_at', 'updated_at', 'current_value',]
-
+        fields = [
+            "id",
+            "owner_id",
+            "co_owners",
+            "name",
+            "description",
+            "created_at",
+            "updated_at",
+            "current_value",
+        ]
 
 
 class WalletCreateSerializer(serializers.ModelSerializer):
@@ -40,7 +51,7 @@ class WalletCreateSerializer(serializers.ModelSerializer):
     Attributes:
         owner_id: A PrimaryKeyRelatedField that represents the owner of the wallet.
         co_owners: A PrimaryKeyRelatedField that represents the co-owner of the wallet.
-    
+
     Methods:
         validate_co_owners: A method that validates the co_owner field.
             It checks if the owner is not in the co_owner list.
@@ -49,34 +60,41 @@ class WalletCreateSerializer(serializers.ModelSerializer):
     """
 
     owner_id = serializers.PrimaryKeyRelatedField(read_only=True)
-    co_owners = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    co_owners = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=User.objects.all(), required=False
+    )
 
     class Meta:
         model = Wallet
-        fields = ['id','name', 'owner_id', 'co_owners', 'description']
-
+        fields = ["id", "name", "owner_id", "co_owners", "description"]
 
     def validate_co_owners(self, value):
 
-        owner = self.instance.owner if self.instance else self.context['request'].user
+        owner = self.instance.owner if self.instance else self.context["request"].user
 
         if owner in value:
-            raise serializers.ValidationError("Owner cannot be a co-owner of the wallet.")
+            raise serializers.ValidationError(
+                "Owner cannot be a co-owner of the wallet."
+            )
         return value
-    
+
     def validate_name(self, value):
 
-        owner = self.context['request'].user
+        owner = self.context["request"].user
 
         if len(value) < 3:
             raise serializers.ValidationError("Name must be at least 3 characters long")
-        
+
         existing_wallet = Wallet.objects.filter(owner=owner, name=value).first()
-        if existing_wallet and (self.instance is None or existing_wallet.id != self.instance.id):
-            raise serializers.ValidationError("Wallet with this Owner and Name already exists.")
+        if existing_wallet and (
+            self.instance is None or existing_wallet.id != self.instance.id
+        ):
+            raise serializers.ValidationError(
+                "Wallet with this Owner and Name already exists."
+            )
 
         return value
-    
+
 
 class WalletListParametersSerializer(serializers.Serializer):
     """
@@ -92,9 +110,11 @@ class WalletListParametersSerializer(serializers.Serializer):
 
     """
 
-    owner_id = CommaSeparatedIntegerListField(child=serializers.IntegerField(), required=False)
-    co_owner_id = CommaSeparatedIntegerListField(child=serializers.IntegerField(), required=False)
+    owner_id = CommaSeparatedIntegerListField(
+        child=serializers.IntegerField(), required=False
+    )
+    co_owner_id = CommaSeparatedIntegerListField(
+        child=serializers.IntegerField(), required=False
+    )
     created_before = serializers.DateTimeField(required=False)
     created_after = serializers.DateTimeField(required=False)
-    
-
