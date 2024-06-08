@@ -1,7 +1,7 @@
 from rest_framework.request import Request
 
 from wallets.serializers import WalletSerializer
-from investments_tracker_app.urls import api_root_path
+# from investments_tracker_app.urls import api_root_path
 
 
 class ListWalletsRequest:
