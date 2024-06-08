@@ -1,5 +1,6 @@
 from rest_framework import permissions
 
+
 class IsOwnerOrCoOwner(permissions.BasePermission):
     """
     Custom permission to only allow owners or co-owners of an object to read, update it.
@@ -7,14 +8,16 @@ class IsOwnerOrCoOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """
-        Return True if permission is granted to the wallet owner or is on the co-owner list.
+        Return True if permission is granted to the object owner or co-owners.
         """
-        try:
-            return obj.owner == request.user or request.user in obj.co_owners.all()
-        except AttributeError:
-            return obj.wallet.owner == request.user or request.user in obj.wallet.co_owners.all()
-           
-    
+
+        return (
+            int(obj["owner_id"]) == request.user.id
+            or request.user.id in obj["co_owners"]
+            or request.user.is_staff
+        )
+
+
 class IsOwner(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to read, update it.
@@ -22,11 +25,7 @@ class IsOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """
-        Return True if permission is granted to the wallet owner.
+        Return True if permission is granted to the object owner.
         """
-        try:
-            return obj.owner == request.user
-        except AttributeError:
-            return obj.user == request.user
-    
-    
+
+        return int(obj["owner_id"]) == request.user.id
