@@ -1,8 +1,8 @@
 import pytest
 from unittest import mock # adding it here just to show you. Always define imports at file top level
 from wallets.tests.test_fixture import authenticated_client, api_client, test_user
-from wallets.controllers.wallet import WalletController
 from wallets.schema.wallet import ListWalletsRequest, ListWalletsResponse
+from rest_framework.request import Request
 
 
 class TestWalletAPI:
@@ -24,7 +24,11 @@ class TestWalletAPI:
         list_wallets_mock.return_value = response
 
         resp = authenticated_client.get(authenticated_client.url + "wallets/")
-        #list_wallets_mock.assert_called_with(add args used in the call)
+
+
+        
+        
+        list_wallets_mock.assert_called_with()
         assert resp.status_code == 200
         print(resp.json())
 
