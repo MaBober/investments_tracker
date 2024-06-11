@@ -1,7 +1,9 @@
+from django.conf import settings
+from django.contrib.auth.models import User
+
 from rest_framework.request import Request
 
 from wallets.serializers import WalletSerializer
-# from investments_tracker_app.urls import api_root_path
 
 
 class ListWalletsRequest:
@@ -84,7 +86,7 @@ class BuildWalletResponse:
 
         self.data = {field: all_data[field] for field in fields}
         self.status = 201
-        self.location = f"{api_root_path}wallets/{wallet.id}"
+        self.location = f"{settings.API_ROOT_PATH}wallets/{wallet.id}"
 
 
 class WalletDetailsRequest:
