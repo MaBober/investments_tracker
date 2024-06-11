@@ -38,11 +38,10 @@ class WalletView(APIView):
 
         request = ListWalletsRequest(
             query_parameters=request_parameters_serializer.validated_data,
-            user=request.user,
+            user_id=request.user.id,
+            user_is_staff=request.user.is_staff,
         )
         wallets: ListWalletsResponse = WalletController.list_wallets(request)
-
-        wallets = WalletController.list_wallets(request)
 
         return Response(data=wallets.data, status=wallets.status)
 
@@ -55,7 +54,7 @@ class WalletView(APIView):
         if serializer.is_valid():
 
             request = BuildWalletRequest(
-                request_data=serializer.validated_data, owner=request.user
+                data=serializer.validated_data, owner_id=request.user.id
             )
             wallet: BuildWalletResponse = WalletController.build_wallet(request)
 
@@ -84,7 +83,7 @@ class WalletDetailView(APIView):
 
     def get_wallet_and_check_permissions(self, request, pk):
 
-        controller_request = WalletDetailsRequest(pk)
+        controller_request = WalletDetailsRequest(pk=pk)
         wallet: WalletDetailsResponse = WalletController.wallet_details(
             controller_request
         )
@@ -110,7 +109,9 @@ class WalletDetailView(APIView):
         )
 
         if serializer.is_valid():
-            controller_request = UpdateWalletRequest(pk, serializer.validated_data)
+            controller_request = UpdateWalletRequest(
+                pk=pk, data=serializer.validated_data
+            )
             response: UpdateWalletResponse = WalletController.update_wallet(
                 controller_request
             )
@@ -123,7 +124,7 @@ class WalletDetailView(APIView):
 
         self.get_wallet_and_check_permissions(request, pk)
 
-        controller_request = DeleteWalletRequest(pk)
+        controller_request = DeleteWalletRequest(pk=pk)
         response: DeleteWalletResponse = WalletController.delete_wallet(
             controller_request
         )
