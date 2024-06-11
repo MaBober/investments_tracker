@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
 from rest_framework import serializers
-from rest_framework.fields import CharField
+from rest_framework.fields import IntegerField
 
 from wallets.models import Wallet
 from wallets.serializers.generic import CommaSeparatedIntegerListField
@@ -20,7 +20,7 @@ class WalletSerializer(serializers.ModelSerializer):
         co_owners: A UserSerializer instance that represents the co-owner of the wallet.
     """
 
-    owner_id = CharField(source="owner.id", read_only=True)
+    owner_id = IntegerField(source="owner.id", read_only=True)
     co_owners = serializers.PrimaryKeyRelatedField(
         many=True, queryset=User.objects.all(), required=False
     )

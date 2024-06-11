@@ -8,11 +8,9 @@ from django.utils import timezone
 
 from wallets.models import Wallet
 
-
 @pytest.fixture
-def test_wallets(test_user):
-
-    wallets = []
+def test_wallets_data(test_user):
+    
     wallets_data = [
         {'owner': test_user[0], 'name': 'John Wallet', 'description': 'John Wallet description'},
         {'owner': test_user[1], 'name': 'Paul Wallet', 'description': 'Paul Wallet description', 'co_owners': [test_user[2]]},
@@ -21,10 +19,20 @@ def test_wallets(test_user):
         {'owner': test_user[0], 'name': 'John Wallet 2', 'description': 'John Wallet 2 description'}
     ]
 
+    return wallets_data
+
+@pytest.fixture
+def test_wallets(test_wallets_data):
+
+    wallets = []
+    wallets_data = test_wallets_data
+
     for wallet in wallets_data:
         wallets.append(Wallet.objects.create(owner=wallet['owner'], name=wallet['name'], description=wallet['description']))
         if 'co_owners' in wallet:
             wallets[-1].co_owners.set(wallet['co_owners'])
     
     return wallets
+
+
 

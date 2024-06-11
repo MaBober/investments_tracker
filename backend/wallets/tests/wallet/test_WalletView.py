@@ -1,37 +1,73 @@
 import pytest
-from unittest import mock # adding it here just to show you. Always define imports at file top level
-from wallets.tests.test_fixture import authenticated_client, api_client, test_user
+from zoneinfo import ZoneInfo
+from unittest import (
+    mock,
+)  # adding it here just to show you. Always define imports at file top level
+from wallets.tests.test_fixture import api_client, test_user
+from wallets.tests.wallet.test_fixture import test_wallets, test_wallets_data
 from wallets.schema.wallet import ListWalletsRequest, ListWalletsResponse
 from rest_framework.request import Request
 
 
 class TestWalletAPI:
-    
-    # @mock.patch('wallets.controllers.wallet.WalletController.list_wallets')
-    #@mock.patch("path to WalletController.list_wallets", return_value=mocked_value_you_will_create)
-    
+
     @pytest.mark.django_db
     @mock.patch("wallets.controllers.wallet.WalletController.list_wallets")
-    def test_get_success(self, list_wallets_mock, authenticated_client):
+    def test_get_success(self, list_wallets_mock, api_client, test_user, test_wallets):
 
-        # You need to have mocks defined in the API call scope. You can use decorators or "with" function.
-        # No function ouside of the handler scope should be really called, they should be mocked
-        response = ListWalletsResponse(
-            wallets = []
+        expected_response = [
+            {
+                "id": test_wallets[0].id,
+                "name": test_wallets[0].name,
+                "description": test_wallets[0].description,
+                "owner_id": test_wallets[0].owner.id,
+                "co_owners": [
+                    co_owner.id for co_owner in test_wallets[0].co_owners.all()
+                ],
+                'current_value': '0.00',
+                'created_at': test_wallets[0].created_at.astimezone(ZoneInfo('Europe/Warsaw')).isoformat(),
+                'updated_at': test_wallets[0].updated_at.astimezone(ZoneInfo('Europe/Warsaw')).isoformat()
+
+
+            },
+            {
+                "id": test_wallets[1].id,
+                "name": test_wallets[1].name,
+                "description": test_wallets[1].description,
+                "owner_id": test_wallets[1].owner.id,
+                "co_owners": [
+                    co_owner.id for co_owner in test_wallets[1].co_owners.all()
+                ],
+                'current_value': '0.00',
+                'created_at': test_wallets[1].created_at.astimezone(ZoneInfo('Europe/Warsaw')).isoformat(),
+                'updated_at': test_wallets[1].updated_at.astimezone(ZoneInfo('Europe/Warsaw')).isoformat()
+            },
+        ]
+
+        list_wallets_mock.return_value = ListWalletsResponse(
+            wallets=[test_wallets[0], test_wallets[1]]
         )
-        response.data = ["wallet1", "wallet2"]
+
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.get(api_client.url + "wallets/")
+
+        assert response.json() == expected_response
+        assert response.status_code == 200
+        list_wallets_mock.assert_called_once()
         
-        list_wallets_mock.return_value = response
 
-        resp = authenticated_client.get(authenticated_client.url + "wallets/")
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.list_wallets")
+    def test_get_no_wallets(self, list_wallets_mock, api_client, test_user):
 
+        list_wallets_mock.return_value = ListWalletsResponse(wallets=[])
 
-        
-        
-        list_wallets_mock.assert_called_with()
-        assert resp.status_code == 200
-        print(resp.json())
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.get(api_client.url + "wallets/")
 
-        #assert resp.json() == expected_response 1
+        assert response.json() == []
+        assert response.status_code == 200
+        list_wallets_mock.assert_called_once()
+
 
 
