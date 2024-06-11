@@ -1,7 +1,7 @@
-from rest_framework.request import Request
+from django.conf import settings
+from django.contrib.auth.models import User
 
 from wallets.serializers import WalletSerializer
-from investments_tracker_app.urls import api_root_path
 
 
 class ListWalletsRequest:
@@ -11,14 +11,14 @@ class ListWalletsRequest:
     This class is used to encapsulate the data from a request in a structured way.
 
     Attributes:
-        parameters (dict): A dictionary with the query parameters of the request.
+        query_parameters (dict): A dictionary with the query parameters of the request.
         user (User): The user making the request.
 
     """
 
-    def __init__(self, request: Request) -> None:
-        self.parameters = request.query_params.dict()
-        self.user = request.user
+    def __init__(self, query_parameters: dict, user: User) -> None:
+        self.query_parameters = query_parameters
+        self.user = user
 
 
 class ListWalletsResponse:
@@ -55,9 +55,9 @@ class BuildWalletRequest:
         owner (User): The user making the request.
     """
 
-    def __init__(self, request: Request) -> None:
-        self.data = request.data
-        self.owner = request.user
+    def __init__(self, request_data: dict, owner: User) -> None:
+        self.data = request_data
+        self.owner = owner
 
 
 class BuildWalletResponse:
@@ -84,7 +84,7 @@ class BuildWalletResponse:
 
         self.data = {field: all_data[field] for field in fields}
         self.status = 201
-        self.location = f"{api_root_path}wallets/{wallet.id}"
+        self.location = f"{settings.API_ROOT_PATH}wallets/{wallet.id}"
 
 
 class WalletDetailsRequest:
@@ -150,7 +150,7 @@ class DeleteWalletResponse:
         status (int): The HTTP status code of the response.
     """
 
-    def __init__(self, status: int) -> None:
+    def __init__(self) -> None:
         self.status = 200
 
 
@@ -182,6 +182,8 @@ class UpdateWalletResponse:
         data (dict): The serialized data of the wallet. Only specific fields are included in this data.
         status (int): The HTTP status code of the response.
     """
+
+    serializer = WalletSerializer
 
     def __init__(self, wallet) -> None:
         self.wallet = wallet
