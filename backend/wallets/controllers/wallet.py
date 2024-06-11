@@ -57,14 +57,14 @@ class WalletController:
         """
 
         if not request.user.is_staff:
-            request.parameters["user_id"] = request.user.id
+            request.query_parameters["user_id"] = request.user.id
 
         wallets = WalletRepository.get_all_wallets(
-            user_id=request.parameters.get("user_id"),
-            co_owner_id=request.parameters.get("co_owner_id"),
-            owner_id=request.parameters.get("owner_id"),
-            created_before=request.parameters.get("created_before"),
-            created_after=request.parameters.get("created_after"),
+            user_id=request.query_parameters.get("user_id"),
+            co_owner_id=request.query_parameters.get("co_owner_id"),
+            owner_id=request.query_parameters.get("owner_id"),
+            created_before=request.query_parameters.get("created_before"),
+            created_after=request.query_parameters.get("created_after"),
         )
 
         response = ListWalletsResponse(wallets)
@@ -100,7 +100,7 @@ class WalletController:
             Wallet: The wallet instance.
         """
 
-        co_owners = request._data.pop("co_owners", [])
+        co_owners = request.data.pop("co_owners", [])
         wallet = WalletRepository.get_single_wallet(request.pk)
 
         for key, value in request.data.items():

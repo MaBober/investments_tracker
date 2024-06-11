@@ -36,7 +36,10 @@ class WalletView(APIView):
         )
         request_parameters_serializer.is_valid(raise_exception=True)
 
-        request = ListWalletsRequest(request)
+        request = ListWalletsRequest(
+            query_parameters=request_parameters_serializer.validated_data,
+            user=request.user,
+        )
         wallets: ListWalletsResponse = WalletController.list_wallets(request)
 
         wallets = WalletController.list_wallets(request)
@@ -51,7 +54,9 @@ class WalletView(APIView):
 
         if serializer.is_valid():
 
-            request = BuildWalletRequest(request)
+            request = BuildWalletRequest(
+                request_data=serializer.validated_data, owner=request.user
+            )
             wallet: BuildWalletResponse = WalletController.build_wallet(request)
 
             return Response(
@@ -105,7 +110,7 @@ class WalletDetailView(APIView):
         )
 
         if serializer.is_valid():
-            controller_request = UpdateWalletRequest(pk, request.data)
+            controller_request = UpdateWalletRequest(pk, serializer.validated_data)
             response: UpdateWalletResponse = WalletController.update_wallet(
                 controller_request
             )
