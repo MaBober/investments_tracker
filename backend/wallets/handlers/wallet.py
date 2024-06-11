@@ -42,8 +42,6 @@ class WalletView(APIView):
         )
         wallets: ListWalletsResponse = WalletController.list_wallets(request)
 
-        wallets = WalletController.list_wallets(request)
-
         return Response(data=wallets.data, status=wallets.status)
 
     def post(self, request: Request) -> Response:
