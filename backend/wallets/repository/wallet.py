@@ -16,19 +16,19 @@ class WalletRepository:
     """
 
     @staticmethod
-    def create_wallet(request_data: dict, owner: User) -> Wallet:
+    def create_wallet(request_data: dict, owner_id: int) -> Wallet:
         """
         Create a wallet instance from the request data.
 
         Args:
             request_data (dict): The request data.
-            owner (User): The owner of the wallet.
+            owner (int): The owner id.
 
         Returns:
             Wallet: The wallet instance.
         """
 
-        wallet = Wallet.objects.create(owner=owner, **request_data)
+        wallet = Wallet.objects.create(owner_id=owner_id, **request_data)
 
         return wallet
 

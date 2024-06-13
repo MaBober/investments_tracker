@@ -1,5 +1,8 @@
+from django.conf import settings
+
 from wallets.models import Wallet
 from wallets.repository import WalletRepository
+from wallets.serializers import WalletSerializer, ShortWalletSerializer
 from wallets.schema import (
     BuildWalletRequest,
     BuildWalletResponse,
@@ -33,14 +36,18 @@ class WalletController:
             BuildWalletResponse: The response object.
         """
         co_owners = request.data.pop("co_owners", [])
+
         wallet = WalletRepository.create_wallet(
-            request_data=request.data, owner=request.owner
+            request_data=request.data, owner_id=request.owner_id
         )
 
         if co_owners:
             WalletRepository.add_co_owners_to_wallet(wallet=wallet, co_owners=co_owners)
 
-        response = BuildWalletResponse(wallet)
+        response = BuildWalletResponse(
+            data=ShortWalletSerializer(wallet).data,
+            location=f"{settings.API_ROOT_PATH}wallets/{wallet.id}",
+        )
 
         return response
 
@@ -56,8 +63,8 @@ class WalletController:
             ListWalletsResponse: The response object.
         """
 
-        if not request.user.is_staff:
-            request.query_parameters["user_id"] = request.user.id
+        if not request.user_is_staff:
+            request.query_parameters["user_id"] = request.user_id
 
         wallets = WalletRepository.get_all_wallets(
             user_id=request.query_parameters.get("user_id"),
@@ -67,12 +74,16 @@ class WalletController:
             created_after=request.query_parameters.get("created_after"),
         )
 
-        response = ListWalletsResponse(wallets)
+        WalletSerializer(wallets, many=True).data
+
+        response = ListWalletsResponse(
+            data=WalletSerializer(wallets, many=True).data, status=200
+        )
 
         return response
 
     @staticmethod
-    def wallet_details(request: WalletDetailsRequest) -> Wallet:
+    def wallet_details(request: WalletDetailsRequest) -> WalletDetailsResponse:
         """
         Get the details of a wallet by accessing the repository.
 
@@ -84,7 +95,13 @@ class WalletController:
         """
 
         wallet = WalletRepository.get_single_wallet(request.pk)
-        response = WalletDetailsResponse(wallet)
+
+        if wallet is not None:
+            wallet_data = WalletSerializer(wallet).data
+        else:
+            wallet_data = {}
+
+        response = WalletDetailsResponse(data=wallet_data)
 
         return response
 
@@ -114,7 +131,7 @@ class WalletController:
         else:
             WalletRepository.erase_co_owners_from_wallet(wallet)
 
-        response = UpdateWalletResponse(wallet)
+        response = UpdateWalletResponse(data=ShortWalletSerializer(wallet).data)
 
         return response
 

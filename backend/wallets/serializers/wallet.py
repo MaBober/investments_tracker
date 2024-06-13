@@ -42,6 +42,19 @@ class WalletSerializer(serializers.ModelSerializer):
         ]
 
 
+class ShortWalletSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Wallet model.
+
+    This serializer is used to convert Wallet model instances into JSON
+    representations with basic informations.
+    """
+
+    class Meta:
+        model = Wallet
+        fields = ["id", "name", "owner_id", "co_owners", "description"]
+
+
 class WalletCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating a Wallet model instance.
@@ -69,7 +82,6 @@ class WalletCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "owner_id", "co_owners", "description"]
 
     def validate_co_owners(self, value):
-
         owner = self.instance.owner if self.instance else self.context["request"].user
 
         if owner in value:
@@ -79,7 +91,6 @@ class WalletCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_name(self, value):
-
         owner = self.context["request"].user
 
         if len(value) < 3:

@@ -1,27 +1,24 @@
-from django.conf import settings
-from django.contrib.auth.models import User
-
-from wallets.serializers import WalletSerializer
+from pydantic import BaseModel
+from typing import Any, Dict, List
 
 
-class ListWalletsRequest:
+class ListWalletsRequest(BaseModel):
     """
-    Request object for listing wallets controller.
-
-    This class is used to encapsulate the data from a request in a structured way.
+    Represents a request to list wallets.
 
     Attributes:
-        query_parameters (dict): A dictionary with the query parameters of the request.
-        user (User): The user making the request.
+        query_parameters (Dict[str, Any]): The query parameters for the request.
+        user_id (int): The primary key of the user making the request.
+        user_is_staff (bool): A flag indicating if the user is a staff member or not.
 
     """
 
-    def __init__(self, query_parameters: dict, user: User) -> None:
-        self.query_parameters = query_parameters
-        self.user = user
+    query_parameters: Dict[str, Any]
+    user_id: int
+    user_is_staff: bool
 
 
-class ListWalletsResponse:
+class ListWalletsResponse(BaseModel):
     """
     Response object for listing wallets controller.
 
@@ -29,38 +26,31 @@ class ListWalletsResponse:
     It is initialized with a list of Wallet objects from which it extracts the data and constructs the response.
 
     Attributes:
-        wallets (List[Wallet]): A list of wallet instances.
-        data (dict): The serialized data of the wallets.
+        data (List[Dict[str, Any]]): The serialized data of the wallets.
         status (int): The HTTP status code of the response.
 
     """
 
-    serializer = WalletSerializer
-
-    def __init__(self, wallets) -> None:
-
-        self.wallets = wallets
-        self.status = 200
-        self.data = self.serializer(wallets, many=True).data
+    data: List[Dict[str, Any]]
+    status: int = 200
 
 
-class BuildWalletRequest:
+class BuildWalletRequest(BaseModel):
     """
     Request object for building a wallet controller.
 
     This class is used to encapsulate the data from a request in a structured way.
 
     Attributes:
-        data (dict): The data of the request.
-        owner (User): The user making the request.
+        data (Dict[str, Any]): The data of the request.
+        owner_id (int): The primary key of the owner of the wallet.
     """
 
-    def __init__(self, request_data: dict, owner: User) -> None:
-        self.data = request_data
-        self.owner = owner
+    data: Dict[str, Any]
+    owner_id: int
 
 
-class BuildWalletResponse:
+class BuildWalletResponse(BaseModel):
     """
     Response object for building a wallet controller.
 
@@ -68,26 +58,17 @@ class BuildWalletResponse:
     It is initialized with a Wallet object from which it extracts the data and constructs the response.
 
     Attributes:
-        wallet (Wallet): The wallet instance that the response is about.
-        data (dict): The serialized data of the wallet. Only specific fields are included in this data.
+        data (Dict[str, Any]): The serialized data of the wallet.
         status (int): The HTTP status code of the response.
         location (str): The URL location of the wallet.
     """
 
-    serializer = WalletSerializer
-
-    def __init__(self, wallet) -> None:
-        self.wallet = wallet
-
-        all_data = self.serializer(wallet).data
-        fields = ["id", "name", "owner_id", "co_owners", "description"]
-
-        self.data = {field: all_data[field] for field in fields}
-        self.status = 201
-        self.location = f"{settings.API_ROOT_PATH}wallets/{wallet.id}"
+    data: Dict[str, Any]
+    status: int = 201
+    location: str
 
 
-class WalletDetailsRequest:
+class WalletDetailsRequest(BaseModel):
     """
     Request object for getting wallet details controller.
 
@@ -97,11 +78,10 @@ class WalletDetailsRequest:
         pk (int): The primary key of the wallet.
     """
 
-    def __init__(self, pk: int) -> None:
-        self.pk = pk
+    pk: int
 
 
-class WalletDetailsResponse:
+class WalletDetailsResponse(BaseModel):
     """
     Response object for getting wallet details controller.
 
@@ -109,24 +89,16 @@ class WalletDetailsResponse:
     It is initialized with a Wallet object from which it extracts the data and constructs the response.
 
     Attributes:
-        wallet (Wallet): The wallet instance that the response is about.
-        data (dict): The serialized data of the wallet.
+
+        data (Dict[str, Any]): The serialized data of the wallet.
         status (int): The HTTP status code of the response.
     """
 
-    serializer = WalletSerializer
-
-    def __init__(self, wallet) -> None:
-        self.wallet = wallet
-        self.status = 200
-
-        if wallet is not None:
-            self.data = self.serializer(wallet).data
-        else:
-            self.data = None
+    data: Dict[str, Any]
+    status: int = 200
 
 
-class DeleteWalletRequest:
+class DeleteWalletRequest(BaseModel):
     """
     Request object for deleting a wallet controller.
 
@@ -136,11 +108,10 @@ class DeleteWalletRequest:
         pk (int): The primary key of the wallet.
     """
 
-    def __init__(self, pk: int) -> None:
-        self.pk = pk
+    pk: int
 
 
-class DeleteWalletResponse:
+class DeleteWalletResponse(BaseModel):
     """
     Response object for deleting a wallet controller.
 
@@ -150,11 +121,10 @@ class DeleteWalletResponse:
         status (int): The HTTP status code of the response.
     """
 
-    def __init__(self) -> None:
-        self.status = 200
+    status: int = 200
 
 
-class UpdateWalletRequest:
+class UpdateWalletRequest(BaseModel):
     """
     Request object for updating a wallet controller.
 
@@ -162,34 +132,23 @@ class UpdateWalletRequest:
 
     Attributes:
         pk (int): The primary key of the wallet.
-        data (dict): The data of the request.
+        data (Dict[str, Any]): The data of the request.
     """
 
-    def __init__(self, pk: int, data: dict) -> None:
-        self.pk = pk
-        self.data = data
+    pk: int
+    data: Dict[str, Any]
 
 
-class UpdateWalletResponse:
+class UpdateWalletResponse(BaseModel):
     """
     Response object for updating a wallet controller.
 
     This class is used to encapsulate the response data for a wallet controller in a structured way.
-    It is initialized with a Wallet object from which it extracts the data and constructs the response.
 
     Attributes:
-        wallet (Wallet): The wallet instance that the response is about.
-        data (dict): The serialized data of the wallet. Only specific fields are included in this data.
+        data (Dict[str, Any]): The serialized data of the wallet.
         status (int): The HTTP status code of the response.
     """
 
-    serializer = WalletSerializer
-
-    def __init__(self, wallet) -> None:
-        self.wallet = wallet
-
-        all_data = self.serializer(wallet).data
-        fields = ["id", "name", "owner_id", "co_owners", "description"]
-
-        self.data = {field: all_data[field] for field in fields}
-        self.status = 200
+    data: Dict[str, Any]
+    status: int = 201
