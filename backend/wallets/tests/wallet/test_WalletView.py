@@ -15,7 +15,7 @@ class TestWalletAPI:
     @pytest.mark.parametrize(
         "expected_response, query_params",
         [
-            ([],{}),
+            ([], {}),
             (
                 [
                     {
@@ -43,7 +43,7 @@ class TestWalletAPI:
                     "owner_id": "1,2",
                     "co_owner_id": "3",
                     "created_before": "2024-06-12",
-                    "created_after": "2024-06-03"
+                    "created_after": "2024-06-03",
                 },
             ),
         ],
@@ -63,12 +63,13 @@ class TestWalletAPI:
 
         # This step simulates the parameter processing as it would occur in the actual view,
         # ensuring the mock is called with accurately transformed and validated parameters.
-        query_params_check = QueryDict('', mutable=True)
+        query_params_check = QueryDict("", mutable=True)
         query_params_check.update(query_params)
 
-        serialized_query_params = WalletListParametersSerializer(data=query_params_check)
+        serialized_query_params = WalletListParametersSerializer(
+            data=query_params_check
+        )
         serialized_query_params.is_valid(raise_exception=True)
-
 
         list_wallets_mock.assert_called_once()
         list_wallets_mock.assert_called_with(
@@ -83,19 +84,11 @@ class TestWalletAPI:
     @pytest.mark.parametrize(
         "query_params",
         [
-            (
-                {"owner_id": "1, a"}
-            ),
-            (
-                {"co_owner_id": "1, a"}
-            ),
-            (
-                {"created_before": "2024-06-32"}
-            ),
-            (
-                {"created_after": "2024-06-32"}
-            )
-        ]
+            ({"owner_id": "1, a"}),
+            ({"co_owner_id": "1, a"}),
+            ({"created_before": "2024-06-32"}),
+            ({"created_after": "2024-06-32"}),
+        ],
     )
     def test_get_fail(self, query_params, api_client, test_user):
 
@@ -103,4 +96,3 @@ class TestWalletAPI:
         response = api_client.get(api_client.url + "wallets/", query_params)
 
         assert response.status_code == 400
-        
