@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 .vscode/launch.json
 .vscode/settings.json
+run_debug.bat
+run_test.bat
