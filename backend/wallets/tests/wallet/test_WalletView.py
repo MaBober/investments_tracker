@@ -9,6 +9,12 @@ from wallets.schema.wallet import (
     ListWalletsResponse,
     BuildWalletRequest,
     BuildWalletResponse,
+    WalletDetailsRequest,
+    WalletDetailsResponse,
+    UpdateWalletRequest,
+    UpdateWalletResponse,
+    DeleteWalletRequest,
+    DeleteWalletResponse,
 )
 from wallets.serializers.wallet import WalletListParametersSerializer
 
@@ -16,7 +22,7 @@ from wallets.tests.test_fixture import api_client, test_user
 from wallets.tests.wallet.test_fixture import test_wallets, test_wallets_data
 
 
-class TestWalletAPI:
+class TestWalletViewAPI:
 
     @pytest.mark.django_db
     @pytest.mark.parametrize(
@@ -233,3 +239,309 @@ class TestWalletAPI:
 
         build_wallet_mock.assert_not_called()
         assert response.status_code == 400
+
+
+class TestWalletDetailViewAPI:
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.wallet_details")
+    def test_get_success_owner(
+        self, wallet_details_mock, api_client, test_user, test_wallets, 
+    ):
+        wallet_data = {
+                    "id": 1,
+                    "name": "John Wallet",
+                    "description": "John Wallet description",
+                    "owner_id": 1,
+                    "co_owners": [],
+                    "current_value": "0.00",
+                    "created_at": "2021-10-10T12:00:00+02:00",
+                    "updated_at": "2021-10-10T12:00:00+02:00",
+                }
+
+        wallet_details_mock.return_value = WalletDetailsResponse(
+            data=wallet_data
+        )
+
+        api_client.force_authenticate(user=test_wallets[0].owner)
+        response = api_client.get(api_client.url + f"wallets/{test_wallets[0].id}/")
+
+        assert response.json() == wallet_data
+        assert response.status_code == 200
+
+        wallet_details_mock.assert_called_once()
+        wallet_details_mock.assert_called_with(
+            WalletDetailsRequest(pk=test_wallets[0].id)
+        )
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.wallet_details")
+    def test_get_success_co_owner(
+        self, wallet_details_mock, api_client, test_wallets, 
+    ):
+        wallet_data = {
+                    "id": 2,
+                    "name": "Paul Wallet",
+                    "description": "Paul Wallet description",
+                    "owner_id": 2,
+                    "co_owners": [test_wallets[1].co_owners.first().id],
+                    "current_value": "0.00",
+                    "created_at": "2021-10-10T12:00:00+02:00",
+                    "updated_at": "2021-10-10T12:00:00+02:00",
+                }
+        
+        wallet_details_mock.return_value = WalletDetailsResponse(
+            data=wallet_data
+        )
+
+        api_client.force_authenticate(user=test_wallets[1].co_owners.first())
+        response = api_client.get(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        assert response.json() == wallet_data
+        assert response.status_code == 200
+
+        wallet_details_mock.assert_called_once()
+        wallet_details_mock.assert_called_with(
+            WalletDetailsRequest(pk=test_wallets[1].id)
+        )
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.wallet_details")
+    def test_get_fail_no_permission(
+        self, wallet_details_mock, api_client, test_user, test_wallets
+    ):
+
+        wallet_details_mock.return_value = WalletDetailsResponse(
+            data={
+                    "id": 1,
+                    "name": "John Wallet",
+                    "description": "John Wallet description",
+                    "owner_id": 1,
+                    "co_owners": [],
+                    "current_value": "0.00",
+                    "created_at": "2021-10-10T12:00:00+02:00",
+                    "updated_at": "2021-10-10T12:00:00+02:00",
+                }
+        )
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.get(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.wallet_details") 
+    def test_get_fail_not_authorized(
+        self, wallet_details_mock, api_client, test_wallets
+    ):
+
+        wallet_details_mock.return_value = WalletDetailsResponse(
+            data={
+                    "id": 1,
+                    "name": "John Wallet",
+                    "description": "John Wallet description",
+                    "owner_id": 1,
+                    "co_owners": [],
+                    "current_value": "0.00",
+                    "created_at": "2021-10-10T12:00:00+02:00",
+                    "updated_at": "2021-10-10T12:00:00+02:00",
+                }
+        )
+        response = api_client.get(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        assert response.status_code == 401
+
+    
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.wallet_details")
+    def test_get_fail_not_found(
+        self, wallet_details_mock, api_client, test_user
+    ):
+        wallet_details_mock.return_value = WalletDetailsResponse(
+            data={}
+        )
+
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.get(api_client.url + f"wallets/1000/")
+
+        assert response.status_code == 404
+
+    
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_success(
+        self, wallet_update_mock, api_client, test_wallets, 
+    ):
+        wallet_data = {
+                    "id": 1,
+                    "name": "New Wallet name",
+                    "description": "John Wallet description",
+                    "owner_id": test_wallets[0].owner.id,
+                    "co_owners": [],
+                    "current_value": "0.00",
+                    "created_at": "2021-10-10T12:00:00+02:00",
+                    "updated_at": "2021-10-10T12:00:00+02:00",
+                }
+
+        wallet_update_mock.return_value = UpdateWalletResponse(
+            data=wallet_data
+        )
+
+        api_client.force_authenticate(user=test_wallets[0].owner)
+        response = api_client.patch(api_client.url + f"wallets/{test_wallets[0].id}/", {"name": "New Wallet name"})
+
+        wallet_update_mock.assert_called_once()
+        wallet_update_mock.assert_called_with(
+            UpdateWalletRequest(
+                pk=test_wallets[0].id,
+                data={"name": "New Wallet name"},
+            )
+        )
+        assert response.json() == wallet_data
+        assert response.status_code == 201
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize(
+        "request_data",
+        [
+            ({"name": "XX"}),
+            ({"name": ""}),
+            ({"name": "x" * 101}),
+            ({"name": "My Wallet", "description": "x" * 1001}),
+            ({"name": "My Wallet", "co_owners": [1000]}),
+            ({"name": "My Wallet", "co_owners": ["xxx"]}),
+            ({"name": "My Wallet", "co_owners": ["same_as_owner"]}),
+        ],
+    )
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_fail(self, wallet_update_mock, api_client, test_wallets, request_data):
+
+        api_client.force_authenticate(user=test_wallets[0].owner)
+        response = api_client.patch(api_client.url + f"wallets/{test_wallets[0].id}/", request_data)
+
+        wallet_update_mock.assert_not_called()
+        assert response.status_code == 400
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_duplicated_name(
+        self, wallet_update_mock, api_client, test_user, test_wallets
+    ):
+
+        for wallet in test_wallets:
+            if wallet.owner == test_user[0]:
+                request_data = {"name": wallet.name}
+
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.patch(api_client.url + f"wallets/{test_wallets[0].id}/", request_data)
+
+        wallet_update_mock.assert_not_called()
+        assert response.status_code == 400
+
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_fail_no_permission(
+        self, wallet_update_mock, api_client, test_user, test_wallets
+    ):
+
+        api_client.force_authenticate(user=test_user[3])
+        response = api_client.patch(api_client.url + f"wallets/{test_wallets[1].id}/", {"name": "New Wallet name"})
+
+        wallet_update_mock.assert_not_called()
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_fail_not_found(
+        self, wallet_update_mock, api_client, test_user
+    ):
+
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.patch(api_client.url + f"wallets/1000/", {"name": "New Wallet name"})
+
+        wallet_update_mock.assert_not_called()
+        assert response.status_code == 404
+
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.update_wallet")
+    def test_patch_fail_not_authorized(
+        self, wallet_update_mock, api_client, test_wallets
+    ):
+
+        response = api_client.patch(api_client.url + f"wallets/{test_wallets[1].id}/", {"name": "New Wallet name"})
+
+        wallet_update_mock.assert_not_called()
+        assert response.status_code == 401
+
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.delete_wallet")
+    def test_delete_success(
+        self, wallet_delete_mock, api_client, test_wallets, 
+    ):
+        wallet_delete_mock.return_value = DeleteWalletResponse(
+            pk=test_wallets[0].id
+        )
+
+        api_client.force_authenticate(user=test_wallets[0].owner)
+        response = api_client.delete(api_client.url + f"wallets/{test_wallets[0].id}/")
+
+        wallet_delete_mock.assert_called_once()
+        wallet_delete_mock.assert_called_with(
+            DeleteWalletRequest(pk=test_wallets[0].id)
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"id": test_wallets[0].id, "message": "Wallet deleted."}
+
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.delete_wallet")
+    def test_delete_fail_no_permission(
+        self, wallet_delete_mock, api_client, test_user, test_wallets
+    ):
+
+        api_client.force_authenticate(user=test_user[3])
+        response = api_client.delete(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        wallet_delete_mock.assert_not_called()
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.delete_wallet")
+    def test_delete_fail_not_found(
+        self, wallet_delete_mock, api_client, test_user
+    ):
+
+        api_client.force_authenticate(user=test_user[0])
+        response = api_client.delete(api_client.url + f"wallets/1000/")
+
+        wallet_delete_mock.assert_not_called()
+        assert response.status_code == 404
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.delete_wallet")
+    def test_delete_fail_not_authorized(
+        self, wallet_delete_mock, api_client, test_wallets
+    ):
+
+        response = api_client.delete(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        wallet_delete_mock.assert_not_called()
+        assert response.status_code == 401
+
+
+    @pytest.mark.django_db
+    @mock.patch("wallets.controllers.wallet.WalletController.delete_wallet")
+    def test_delete_fail_no_owner(
+        self, wallet_delete_mock, api_client, test_wallets
+    ):
+
+        api_client.force_authenticate(user=test_wallets[1].co_owners.first())
+        response = api_client.delete(api_client.url + f"wallets/{test_wallets[1].id}/")
+
+        wallet_delete_mock.assert_not_called()
+        assert response.status_code == 403
+
+        
