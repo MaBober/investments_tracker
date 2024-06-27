@@ -74,8 +74,6 @@ class WalletController:
             created_after=request.query_parameters.get("created_after"),
         )
 
-        WalletSerializer(wallets, many=True).data
-
         response = ListWalletsResponse(
             data=WalletSerializer(wallets, many=True).data, status=200
         )
